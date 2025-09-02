@@ -12,7 +12,7 @@ importers:
         specifier: latest
         version: 3.880.0
       '@clerk/nextjs':
-        specifier: latest
+        specifier: ^6.31.8
         version: 6.31.8(next@15.2.4(react-dom@19.0.0(react@19.0.0))(react@19.0.0))(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
       '@hookform/resolvers':
         specifier: ^3.10.0
@@ -176,6 +176,9 @@ importers:
       recharts:
         specifier: 2.15.4
         version: 2.15.4(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
+      server:
+        specifier: link:@clerk/nextjs/server
+        version: link:@clerk/nextjs/server
       snappy:
         specifier: latest
         version: 7.3.2
