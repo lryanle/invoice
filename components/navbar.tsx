@@ -4,7 +4,7 @@ import { UserButton } from "@clerk/nextjs"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
-import { FileText, Building2, Settings, BarChart3 } from "lucide-react"
+import { FileText, Building2, Settings, BarChart3, TrendingUp } from "lucide-react"
 
 export function Navbar() {
   const pathname = usePathname()
@@ -13,6 +13,7 @@ export function Navbar() {
     { href: "/dashboard", label: "Dashboard", icon: BarChart3 },
     { href: "/invoices", label: "Invoices", icon: FileText },
     { href: "/companies", label: "Companies", icon: Building2 },
+    { href: "/analytics", label: "Analytics", icon: TrendingUp },
     { href: "/settings", label: "Settings", icon: Settings },
   ]
 
