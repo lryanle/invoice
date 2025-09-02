@@ -4,11 +4,13 @@ import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Plus, Trash2, Package } from "lucide-react"
 
 interface LineItem {
   name: string
+  description: string
   quantity: number
   cost: number
   total: number
@@ -59,7 +61,7 @@ export function LineItemsSection({ lineItems, onLineItemsChange }: LineItemsSect
   }
 
   const addLineItem = () => {
-    onLineItemsChange([...lineItems, { name: "", quantity: 1, cost: 0, total: 0 }])
+    onLineItemsChange([...lineItems, { name: "", description: "", quantity: 1, cost: 0, total: 0 }])
   }
 
   const removeLineItem = (index: number) => {
@@ -85,7 +87,7 @@ export function LineItemsSection({ lineItems, onLineItemsChange }: LineItemsSect
       </div>
 
       {lineItems.map((item, index) => (
-        <div key={index} className="space-y-3 p-4 border rounded-lg bg-muted/20">
+        <div key={index} className="space-y-4 p-6 border rounded-lg bg-card">
           <div className="flex items-center justify-between">
             <Label className="text-sm font-medium">Item {index + 1}</Label>
             {lineItems.length > 1 && (
@@ -100,8 +102,9 @@ export function LineItemsSection({ lineItems, onLineItemsChange }: LineItemsSect
             )}
           </div>
 
-          <div className="grid gap-4 md:grid-cols-4">
-            <div className="md:col-span-2 space-y-2">
+          <div className="space-y-4">
+            {/* Item Name */}
+            <div className="space-y-2">
               <Label htmlFor={`name-${index}`}>Item Name *</Label>
               <Select value={item.name || "custom"} onValueChange={(value) => handleNameSelect(index, value)}>
                 <SelectTrigger>
@@ -132,37 +135,53 @@ export function LineItemsSection({ lineItems, onLineItemsChange }: LineItemsSect
               )}
             </div>
 
+            {/* Description */}
             <div className="space-y-2">
-              <Label htmlFor={`quantity-${index}`}>Quantity *</Label>
-              <Input
-                id={`quantity-${index}`}
-                type="number"
-                min="1"
-                step="1"
-                value={item.quantity}
-                onChange={(e) => updateLineItem(index, "quantity", Number.parseInt(e.target.value) || 1)}
-                placeholder="1"
+              <Label htmlFor={`description-${index}`}>Description</Label>
+              <Textarea
+                id={`description-${index}`}
+                value={item.description}
+                onChange={(e) => updateLineItem(index, "description", e.target.value)}
+                placeholder="Enter item description (optional)"
+                rows={2}
+                className="resize-none"
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor={`cost-${index}`}>Unit Cost ($) *</Label>
-              <Input
-                id={`cost-${index}`}
-                type="number"
-                min="0"
-                step="0.01"
-                value={item.cost}
-                onChange={(e) => updateLineItem(index, "cost", Number.parseFloat(e.target.value) || 0)}
-                placeholder="0.00"
-              />
-            </div>
-          </div>
+            {/* Quantity, Cost, and Total with improved spacing */}
+            <div className="grid gap-4 md:grid-cols-3">
+              <div className="space-y-2">
+                <Label htmlFor={`quantity-${index}`}>Quantity *</Label>
+                <Input
+                  id={`quantity-${index}`}
+                  type="number"
+                  min="1"
+                  step="1"
+                  value={item.quantity}
+                  onChange={(e) => updateLineItem(index, "quantity", Number.parseInt(e.target.value) || 1)}
+                  placeholder="1"
+                />
+              </div>
 
-          <div className="flex justify-end">
-            <div className="text-right">
-              <Label className="text-sm text-muted-foreground">Total</Label>
-              <div className="text-lg font-semibold text-primary">${item.total.toFixed(2)}</div>
+              <div className="space-y-2">
+                <Label htmlFor={`cost-${index}`}>Unit Cost ($) *</Label>
+                <Input
+                  id={`cost-${index}`}
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={item.cost}
+                  onChange={(e) => updateLineItem(index, "cost", Number.parseFloat(e.target.value) || 0)}
+                  placeholder="0.00"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-sm text-muted-foreground">Total</Label>
+                <div className="h-10 flex items-center justify-end px-3 bg-muted rounded-md">
+                  <span className="text-lg font-semibold text-primary">${item.total.toFixed(2)}</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>

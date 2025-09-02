@@ -24,6 +24,7 @@ interface UserProfile {
   fullName: string
   email: string
   phone?: string
+  currency?: string
   address: {
     street1: string
     street2?: string
@@ -36,6 +37,7 @@ interface UserProfile {
 
 interface LineItem {
   name: string
+  description: string
   quantity: number
   cost: number
   total: number
@@ -98,8 +100,16 @@ export function LiveInvoicePreview({
     }
   }
 
+  const formatCurrency = (amount: number) => {
+    const currency = userProfile?.currency || "USD"
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: currency,
+    }).format(amount)
+  }
+
   const validLineItems = lineItems.filter((item) => item.name.trim() !== "")
-  const itemsPerPage = 10
+  const itemsPerPage = 8
   const totalPages = Math.ceil(validLineItems.length / itemsPerPage)
 
   if (loading) {
@@ -118,143 +128,161 @@ export function LiveInvoicePreview({
     const pageItems = validLineItems.slice(startIndex, endIndex)
 
     return (
-      <div key={pageNumber} className="bg-white text-black p-8 min-h-[800px] shadow-lg border">
-        {/* Header */}
-        <div className="flex justify-between items-start mb-8">
-          <div className="space-y-2">
-            <h1 className="text-3xl font-bold text-primary">INVOICE</h1>
-            <div className="text-sm space-y-1">
-              <div>
-                <span className="font-semibold">Invoice #:</span> {invoiceNumber}
+      <div key={pageNumber} className="bg-white text-black p-8 min-h-[800px] shadow-lg border rounded-lg">
+        {/* Header with improved spacing */}
+        <div className="flex justify-between items-start mb-10">
+          <div className="space-y-3">
+            <h1 className="text-4xl font-bold text-blue-600">INVOICE</h1>
+            <div className="text-sm space-y-1 text-gray-700">
+              <div className="flex gap-2">
+                <span className="font-semibold min-w-20">Invoice #:</span>
+                <span>{invoiceNumber}</span>
               </div>
-              <div>
-                <span className="font-semibold">Date:</span> {date ? new Date(date).toLocaleDateString() : "Not set"}
+              <div className="flex gap-2">
+                <span className="font-semibold min-w-20">Date:</span>
+                <span>{date ? new Date(date).toLocaleDateString() : "Not set"}</span>
               </div>
-              <div>
-                <span className="font-semibold">Due Date:</span>{" "}
-                {dueDate ? new Date(dueDate).toLocaleDateString() : "Not set"}
+              <div className="flex gap-2">
+                <span className="font-semibold min-w-20">Due Date:</span>
+                <span>{dueDate ? new Date(dueDate).toLocaleDateString() : "Not set"}</span>
               </div>
             </div>
           </div>
           {pageNumber === 0 && (
-            <Badge variant="secondary" className="text-xs">
+            <Badge variant="secondary" className="text-xs bg-gray-100">
               Preview
             </Badge>
           )}
         </div>
 
-        {/* From and To sections - only on first page */}
+        {/* From and To sections with improved layout - only on first page */}
         {pageNumber === 0 && (
-          <div className="grid grid-cols-2 gap-8 mb-8">
-            {/* From */}
-            <div className="space-y-2">
-              <h3 className="font-semibold text-sm text-primary">FROM:</h3>
+          <div className="grid grid-cols-2 gap-12 mb-10">
+            {/* From Section */}
+            <div className="space-y-3">
+              <h3 className="font-bold text-sm text-blue-600 border-b border-blue-200 pb-1">FROM</h3>
               {userProfile ? (
-                <div className="text-sm space-y-1">
-                  <div className="font-medium">{userProfile.fullName}</div>
+                <div className="text-sm space-y-1 text-gray-700">
+                  <div className="font-semibold text-base text-black">{userProfile.fullName}</div>
                   <div>{userProfile.email}</div>
                   {userProfile.phone && <div>{userProfile.phone}</div>}
-                  <div>{userProfile.address.street1}</div>
-                  {userProfile.address.street2 && <div>{userProfile.address.street2}</div>}
-                  <div>
-                    {userProfile.address.city}, {userProfile.address.state} {userProfile.address.zip}
+                  <div className="pt-2 space-y-1">
+                    <div>{userProfile.address.street1}</div>
+                    {userProfile.address.street2 && <div>{userProfile.address.street2}</div>}
+                    <div>
+                      {userProfile.address.city}, {userProfile.address.state} {userProfile.address.zip}
+                    </div>
+                    <div>{userProfile.address.country}</div>
                   </div>
-                  <div>{userProfile.address.country}</div>
                 </div>
               ) : (
-                <div className="text-sm text-muted-foreground">Please complete your profile settings</div>
+                <div className="text-sm text-gray-500 italic">Please complete your profile settings</div>
               )}
             </div>
 
-            {/* To */}
-            <div className="space-y-2">
-              <h3 className="font-semibold text-sm text-primary">BILL TO:</h3>
+            {/* To Section */}
+            <div className="space-y-3">
+              <h3 className="font-bold text-sm text-blue-600 border-b border-blue-200 pb-1">BILL TO</h3>
               {company ? (
-                <div className="text-sm space-y-1">
-                  <div className="font-medium">{company.name}</div>
+                <div className="text-sm space-y-1 text-gray-700">
+                  <div className="font-semibold text-base text-black">{company.name}</div>
                   <div>{company.email}</div>
-                  <div>{company.address.street1}</div>
-                  {company.address.street2 && <div>{company.address.street2}</div>}
-                  <div>
-                    {company.address.city}, {company.address.state} {company.address.zip}
+                  <div className="pt-2 space-y-1">
+                    <div>{company.address.street1}</div>
+                    {company.address.street2 && <div>{company.address.street2}</div>}
+                    <div>
+                      {company.address.city}, {company.address.state} {company.address.zip}
+                    </div>
+                    <div>{company.address.country}</div>
                   </div>
-                  <div>{company.address.country}</div>
                 </div>
               ) : (
-                <div className="text-sm text-muted-foreground">Please select a company</div>
+                <div className="text-sm text-gray-500 italic">Please select a company</div>
               )}
             </div>
           </div>
         )}
 
-        {/* Line Items Table */}
-        <div className="mb-8">
+        {/* Line Items Table with improved spacing */}
+        <div className="mb-10">
           {pageNumber === 0 && (
-            <div className="grid grid-cols-12 gap-2 bg-muted p-3 text-sm font-semibold border-b">
-              <div className="col-span-6">DESCRIPTION</div>
-              <div className="col-span-2 text-center">QTY</div>
-              <div className="col-span-2 text-center">RATE</div>
-              <div className="col-span-2 text-right">AMOUNT</div>
+            <div className="bg-blue-50 border border-blue-200 rounded-t-lg">
+              <div className="grid grid-cols-12 gap-4 p-4 text-sm font-bold text-blue-800">
+                <div className="col-span-5">DESCRIPTION</div>
+                <div className="col-span-2 text-center">QTY</div>
+                <div className="col-span-2 text-center">RATE</div>
+                <div className="col-span-3 text-right">AMOUNT</div>
+              </div>
             </div>
           )}
 
           {pageItems.length > 0 ? (
-            <div className="space-y-0">
+            <div className="border border-t-0 border-blue-200 rounded-b-lg">
               {pageItems.map((item, index) => (
-                <div key={startIndex + index} className="grid grid-cols-12 gap-2 p-3 text-sm border-b">
-                  <div className="col-span-6">{item.name}</div>
-                  <div className="col-span-2 text-center">{item.quantity}</div>
-                  <div className="col-span-2 text-center">${item.cost.toFixed(2)}</div>
-                  <div className="col-span-2 text-right">${item.total.toFixed(2)}</div>
+                <div
+                  key={startIndex + index}
+                  className="grid grid-cols-12 gap-4 p-4 text-sm border-b border-gray-100 last:border-b-0"
+                >
+                  <div className="col-span-5">
+                    <div className="font-medium text-black">{item.name}</div>
+                    {item.description && (
+                      <div className="text-xs text-gray-600 mt-1 leading-relaxed">{item.description}</div>
+                    )}
+                  </div>
+                  <div className="col-span-2 text-center font-medium">{item.quantity}</div>
+                  <div className="col-span-2 text-center">{formatCurrency(item.cost)}</div>
+                  <div className="col-span-3 text-right font-semibold">{formatCurrency(item.total)}</div>
                 </div>
               ))}
             </div>
           ) : (
             pageNumber === 0 && (
-              <div className="p-8 text-center text-muted-foreground">
-                <div className="text-sm">No line items added yet</div>
+              <div className="border border-t-0 border-blue-200 rounded-b-lg p-8 text-center text-gray-500">
+                <div className="text-sm italic">No line items added yet</div>
               </div>
             )
           )}
         </div>
 
-        {/* Totals - only on last page */}
+        {/* Totals with improved styling - only on last page */}
         {pageNumber === totalPages - 1 && (
-          <div className="flex justify-end mb-8">
-            <div className="w-64 space-y-2">
-              <div className="flex justify-between text-sm">
-                <span>Subtotal:</span>
-                <span>${subtotal.toFixed(2)}</span>
-              </div>
-              {tax > 0 && (
+          <div className="flex justify-end mb-10">
+            <div className="w-80 bg-gray-50 border border-gray-200 rounded-lg p-6">
+              <div className="space-y-3">
                 <div className="flex justify-between text-sm">
-                  <span>Tax:</span>
-                  <span>${tax.toFixed(2)}</span>
+                  <span className="text-gray-600">Subtotal:</span>
+                  <span className="font-medium">{formatCurrency(subtotal)}</span>
                 </div>
-              )}
-              <Separator />
-              <div className="flex justify-between font-semibold">
-                <span>Total:</span>
-                <span className="text-primary">${total.toFixed(2)}</span>
+                {tax > 0 && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">Tax:</span>
+                    <span className="font-medium">{formatCurrency(tax)}</span>
+                  </div>
+                )}
+                <Separator className="my-3" />
+                <div className="flex justify-between text-lg font-bold">
+                  <span>Total:</span>
+                  <span className="text-blue-600">{formatCurrency(total)}</span>
+                </div>
               </div>
             </div>
           </div>
         )}
 
-        {/* Notes - only on last page */}
+        {/* Notes with improved styling - only on last page */}
         {pageNumber === totalPages - 1 && notes && (
-          <div className="mb-8">
-            <h3 className="font-semibold text-sm text-primary mb-2">NOTES:</h3>
-            <div className="text-sm whitespace-pre-wrap">{notes}</div>
+          <div className="mb-8 bg-gray-50 border border-gray-200 rounded-lg p-4">
+            <h3 className="font-bold text-sm text-blue-600 mb-3">NOTES</h3>
+            <div className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{notes}</div>
           </div>
         )}
 
         {/* Footer */}
         <div className="absolute bottom-8 left-8 right-8">
-          <div className="flex justify-between items-center text-xs text-muted-foreground">
-            <div>Thank you for your business!</div>
+          <div className="flex justify-between items-center text-xs text-gray-500 border-t border-gray-200 pt-4">
+            <div className="italic">Thank you for your business!</div>
             {totalPages > 1 && (
-              <div>
+              <div className="font-medium">
                 Page {pageNumber + 1} of {totalPages}
               </div>
             )}
@@ -294,18 +322,18 @@ export function LiveInvoicePreview({
           </div>
           <div className="flex justify-between text-sm">
             <span className="text-muted-foreground">Subtotal:</span>
-            <span>${subtotal.toFixed(2)}</span>
+            <span>{formatCurrency(subtotal)}</span>
           </div>
           {tax > 0 && (
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">Tax:</span>
-              <span>${tax.toFixed(2)}</span>
+              <span>{formatCurrency(tax)}</span>
             </div>
           )}
           <Separator />
           <div className="flex justify-between font-semibold">
             <span>Total:</span>
-            <span className="text-primary text-lg">${total.toFixed(2)}</span>
+            <span className="text-primary text-lg">{formatCurrency(total)}</span>
           </div>
           {totalPages > 1 && (
             <>

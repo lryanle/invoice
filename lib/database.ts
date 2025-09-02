@@ -2,6 +2,10 @@ import { getDatabase } from "./mongodb"
 import type { UserProfile, Company, Invoice } from "./models/user"
 import { ObjectId } from "mongodb"
 
+export async function connectToDatabase() {
+  return await getDatabase()
+}
+
 export class DatabaseService {
   private static async getDb() {
     return await getDatabase()

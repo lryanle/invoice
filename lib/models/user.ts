@@ -6,6 +6,7 @@ export interface UserProfile {
   email: string
   fullName: string
   phone?: string
+  currency: string // Added currency field for multi-currency support
   address: {
     street1: string
     street2?: string
@@ -23,6 +24,7 @@ export interface Company {
   userId: string // Clerk user ID
   name: string
   email: string
+  invoiceCounter: number // Added invoice counter for auto-incrementing invoice numbers
   address: {
     street1: string
     street2?: string
@@ -37,6 +39,7 @@ export interface Company {
 
 export interface LineItem {
   name: string
+  description: string // Added description field for line items
   quantity: number
   cost: number
   total: number

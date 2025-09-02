@@ -7,14 +7,16 @@ import { useUser } from "@clerk/nextjs"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Separator } from "@/components/ui/separator"
 import { useToast } from "@/hooks/use-toast"
-import { Loader2, Save, User, Phone, Mail, MapPin } from "lucide-react"
+import { Loader2, Save, User, Phone, Mail, MapPin, DollarSign } from "lucide-react"
 
 interface UserProfile {
   fullName: string
   email: string
   phone: string
+  currency: string
   address: {
     street1: string
     street2: string
@@ -25,6 +27,17 @@ interface UserProfile {
   }
 }
 
+const currencies = [
+  { code: "USD", name: "US Dollar", symbol: "$" },
+  { code: "EUR", name: "Euro", symbol: "€" },
+  { code: "GBP", name: "British Pound", symbol: "£" },
+  { code: "CAD", name: "Canadian Dollar", symbol: "C$" },
+  { code: "AUD", name: "Australian Dollar", symbol: "A$" },
+  { code: "JPY", name: "Japanese Yen", symbol: "¥" },
+  { code: "CHF", name: "Swiss Franc", symbol: "CHF" },
+  { code: "CNY", name: "Chinese Yuan", symbol: "¥" },
+]
+
 export function UserSettingsForm() {
   const { user } = useUser()
   const { toast } = useToast()
@@ -34,6 +47,7 @@ export function UserSettingsForm() {
     fullName: "",
     email: "",
     phone: "",
+    currency: "USD",
     address: {
       street1: "",
       street2: "",
@@ -69,6 +83,7 @@ export function UserSettingsForm() {
             fullName: data.fullName || "",
             email: data.email || "",
             phone: data.phone || "",
+            currency: data.currency || "USD",
             address: data.address || {
               street1: "",
               street2: "",
@@ -184,18 +199,39 @@ export function UserSettingsForm() {
           </div>
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="phone">Phone Number</Label>
-          <div className="relative">
-            <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-            <Input
-              id="phone"
-              type="tel"
-              value={profile.phone}
-              onChange={(e) => updateProfile("phone", e.target.value)}
-              placeholder="Enter your phone number"
-              className="pl-10"
-            />
+        <div className="grid gap-4 md:grid-cols-2">
+          <div className="space-y-2">
+            <Label htmlFor="phone">Phone Number</Label>
+            <div className="relative">
+              <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+              <Input
+                id="phone"
+                type="tel"
+                value={profile.phone}
+                onChange={(e) => updateProfile("phone", e.target.value)}
+                placeholder="Enter your phone number"
+                className="pl-10"
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="currency">Default Currency</Label>
+            <Select value={profile.currency} onValueChange={(value) => updateProfile("currency", value)}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select currency" />
+              </SelectTrigger>
+              <SelectContent>
+                {currencies.map((currency) => (
+                  <SelectItem key={currency.code} value={currency.code}>
+                    <div className="flex items-center gap-2">
+                      <DollarSign className="h-4 w-4" />
+                      {currency.symbol} {currency.name} ({currency.code})
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </div>
       </div>
