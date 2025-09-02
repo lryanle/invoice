@@ -8,6 +8,7 @@ import { EditInvoiceDialog } from "@/components/edit-invoice-dialog"
 import { DeleteInvoiceDialog } from "@/components/delete-invoice-dialog"
 import { useToast } from "@/hooks/use-toast"
 import { FileText, Loader2, Calendar, DollarSign, Download, Edit, Trash2 } from "lucide-react"
+import { SkeletonCard } from "@/components/skeleton-card" // Import SkeletonCard component
 
 interface Invoice {
   _id: string
@@ -114,8 +115,10 @@ export function InvoiceList() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <SkeletonCard key={i} />
+        ))}
       </div>
     )
   }

@@ -3,10 +3,11 @@
 import { useEffect, useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { FileText, Users, DollarSign, TrendingUp, Plus, Loader2 } from "lucide-react"
+import { FileText, Users, DollarSign, TrendingUp, Plus } from "lucide-react"
 import Link from "next/link"
 import { Navbar } from "@/components/navbar"
 import { ProfileGuard } from "@/components/profile-guard"
+import { Skeleton } from "@/components/ui/skeleton"
 
 interface DashboardStats {
   totalInvoices: number
@@ -84,7 +85,7 @@ export default function DashboardPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">
-                    {loading ? <Loader2 className="h-6 w-6 animate-spin" /> : stats?.totalInvoices || 0}
+                    {loading ? <Skeleton className="h-8 w-16" /> : stats?.totalInvoices || 0}
                   </div>
                   <p className="text-xs text-muted-foreground">
                     {stats?.totalInvoices === 0 ? "No invoices yet" : "Total generated"}
@@ -99,7 +100,7 @@ export default function DashboardPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">
-                    {loading ? <Loader2 className="h-6 w-6 animate-spin" /> : stats?.totalCompanies || 0}
+                    {loading ? <Skeleton className="h-8 w-16" /> : stats?.totalCompanies || 0}
                   </div>
                   <p className="text-xs text-muted-foreground">
                     {stats?.totalCompanies === 0 ? "No companies added" : "Active clients"}
@@ -114,11 +115,7 @@ export default function DashboardPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">
-                    {loading ? (
-                      <Loader2 className="h-6 w-6 animate-spin" />
-                    ) : (
-                      formatCurrency(stats?.totalInvoicedAmount || 0)
-                    )}
+                    {loading ? <Skeleton className="h-8 w-20" /> : formatCurrency(stats?.totalInvoicedAmount || 0)}
                   </div>
                   <p className="text-xs text-muted-foreground">
                     {stats?.totalInvoicedAmount === 0 ? "No revenue yet" : "Total revenue"}
@@ -133,11 +130,7 @@ export default function DashboardPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">
-                    {loading ? (
-                      <Loader2 className="h-6 w-6 animate-spin" />
-                    ) : (
-                      formatCurrency(stats?.averageInvoiceAmount || 0)
-                    )}
+                    {loading ? <Skeleton className="h-8 w-20" /> : formatCurrency(stats?.averageInvoiceAmount || 0)}
                   </div>
                   <p className="text-xs text-muted-foreground">
                     {stats?.averageInvoiceAmount === 0 ? "No average yet" : "Per invoice"}
@@ -206,8 +199,19 @@ export default function DashboardPage() {
               </CardHeader>
               <CardContent>
                 {loading ? (
-                  <div className="flex items-center justify-center py-8">
-                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                  <div className="space-y-4">
+                    {Array.from({ length: 3 }).map((_, i) => (
+                      <div key={i} className="flex items-center justify-between p-4 border rounded-lg">
+                        <div className="space-y-2">
+                          <Skeleton className="h-4 w-24" />
+                          <Skeleton className="h-3 w-32" />
+                        </div>
+                        <div className="text-right space-y-2">
+                          <Skeleton className="h-4 w-16" />
+                          <Skeleton className="h-3 w-20" />
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 ) : recentInvoices.length > 0 ? (
                   <div className="space-y-4">

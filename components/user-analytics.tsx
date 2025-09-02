@@ -16,6 +16,7 @@ import {
   Bar,
 } from "recharts"
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
+import { SkeletonStatCard, SkeletonChart } from "@/components/ui/skeleton"
 
 interface UserAnalyticsData {
   basicStats: {
@@ -74,7 +75,30 @@ export function UserAnalytics() {
   }, [])
 
   if (loading) {
-    return <div className="text-center py-8">Loading analytics...</div>
+    return (
+      <div className="space-y-6">
+        {/* Basic Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <SkeletonStatCard />
+          <SkeletonStatCard />
+          <SkeletonStatCard />
+          <SkeletonStatCard />
+        </div>
+
+        {/* Revenue Timeline */}
+        <SkeletonChart />
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Status Distribution */}
+          <SkeletonChart />
+          {/* Top Line Items */}
+          <SkeletonChart />
+        </div>
+
+        {/* Recent Activity */}
+        <SkeletonChart />
+      </div>
+    )
   }
 
   if (!data) {

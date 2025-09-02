@@ -7,7 +7,8 @@ import { Badge } from "@/components/ui/badge"
 import { EditCompanyDialog } from "@/components/edit-company-dialog"
 import { DeleteCompanyDialog } from "@/components/delete-company-dialog"
 import { useToast } from "@/hooks/use-toast"
-import { Building2, Mail, MapPin, Edit, Trash2, Loader2 } from "lucide-react"
+import { Building2, Mail, MapPin, Edit, Trash2 } from "lucide-react"
+import { SkeletonCard } from "@/components/skeleton-card" // Import SkeletonCard component
 
 interface Company {
   _id: string
@@ -68,8 +69,10 @@ export function CompanyList() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <SkeletonCard key={i} />
+        ))}
       </div>
     )
   }

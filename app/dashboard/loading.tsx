@@ -1,6 +1,6 @@
-import { SkeletonStatCard, SkeletonChart } from "@/components/ui/skeleton"
+import { SkeletonStatCard, SkeletonTable } from "@/components/ui/skeleton"
 
-export default function AnalyticsLoading() {
+export default function DashboardLoading() {
   return (
     <div className="min-h-screen bg-background">
       {/* Navbar skeleton */}
@@ -14,33 +14,36 @@ export default function AnalyticsLoading() {
       </div>
 
       <main className="container mx-auto px-4 py-8">
-        <div className="space-y-6">
+        <div className="space-y-8">
           {/* Header skeleton */}
           <div className="space-y-2">
-            <div className="h-8 w-24 bg-muted animate-pulse rounded" />
+            <div className="h-8 w-32 bg-muted animate-pulse rounded" />
             <div className="h-4 w-48 bg-muted animate-pulse rounded" />
           </div>
 
-          {/* Tabs skeleton */}
-          <div className="h-10 w-64 bg-muted animate-pulse rounded" />
-
           {/* Stats cards skeleton */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             <SkeletonStatCard />
             <SkeletonStatCard />
             <SkeletonStatCard />
             <SkeletonStatCard />
           </div>
 
-          {/* Charts skeleton */}
-          <SkeletonChart />
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <SkeletonChart />
-            <SkeletonChart />
+          {/* Quick actions skeleton */}
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="rounded-lg border bg-card p-6 space-y-4">
+                <div className="space-y-2">
+                  <div className="h-5 w-32 bg-muted animate-pulse rounded" />
+                  <div className="h-4 w-48 bg-muted animate-pulse rounded" />
+                </div>
+                <div className="h-9 w-full bg-muted animate-pulse rounded" />
+              </div>
+            ))}
           </div>
 
-          <SkeletonChart />
+          {/* Recent invoices skeleton */}
+          <SkeletonTable />
         </div>
       </main>
     </div>
