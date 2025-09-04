@@ -1,7 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { auth } from "@clerk/nextjs/server"
-import { connectToDatabase } from "@/lib/database"
-import { ObjectId } from "mongodb"
+import { DatabaseService } from "@/lib/database"
 
 export async function GET(request: NextRequest) {
   try {
@@ -11,30 +10,15 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const db = await connectToDatabase()
-
-    // Find the most recent invoice to get the last used company
-    const lastInvoice = await db
-      .collection("invoices")
-      .findOne(
-        { userId },
-        { 
-          sort: { createdAt: -1 },
-          projection: { companyId: 1 }
-        }
-      )
-
-    if (!lastInvoice) {
+    // Get the most recent invoice to find the last used company
+    const invoices = await DatabaseService.getInvoicesByUser(userId)
+    
+    if (!invoices || invoices.length === 0) {
       return NextResponse.json({ companyId: null })
     }
 
-    // Get the company details
-    const company = await db
-      .collection("companies")
-      .findOne(
-        { _id: new ObjectId(lastInvoice.companyId), userId },
-        { projection: { _id: 1, name: 1 } }
-      )
+    const lastInvoice = invoices[0] // Already sorted by createdAt desc
+    const company = await DatabaseService.getCompanyById(lastInvoice.companyId)
 
     if (!company) {
       return NextResponse.json({ companyId: null })

@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { auth } from "@clerk/nextjs/server"
-import { connectToDatabase } from "@/lib/database"
+import { DatabaseService } from "@/lib/database"
 
 export async function GET(request: NextRequest) {
   try {
@@ -10,23 +10,15 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const db = await connectToDatabase()
+    // Get all invoices and companies for the user
+    const [invoices, companies] = await Promise.all([
+      DatabaseService.getInvoicesByUser(userId),
+      DatabaseService.getCompaniesByUser(userId)
+    ])
 
-    // Get total invoices count
-    const totalInvoices = await db.collection("invoices").countDocuments({ userId })
-
-    // Get total companies count
-    const totalCompanies = await db.collection("companies").countDocuments({ userId })
-
-    // Get total invoiced amount
-    const invoiceAmounts = await db
-      .collection("invoices")
-      .aggregate([{ $match: { userId } }, { $group: { _id: null, total: { $sum: "$total" } } }])
-      .toArray()
-
-    const totalInvoicedAmount = invoiceAmounts.length > 0 ? invoiceAmounts[0].total : 0
-
-    // Calculate average invoice amount
+    const totalInvoices = invoices.length
+    const totalCompanies = companies.length
+    const totalInvoicedAmount = invoices.reduce((sum, invoice) => sum + invoice.total, 0)
     const averageInvoiceAmount = totalInvoices > 0 ? totalInvoicedAmount / totalInvoices : 0
 
     return NextResponse.json({

@@ -1,14 +1,17 @@
 import { getDatabase } from "./mongodb"
 import type { UserProfile, Company, Invoice } from "./models/user"
-import { ObjectId } from "mongodb"
+import { ObjectId, type Db } from "mongodb"
 
 export async function connectToDatabase() {
   return await getDatabase()
 }
 
 export class DatabaseService {
-  private static async getDb() {
-    return await getDatabase()
+  private static dbInstance: Db | null = null
+  
+  private static async getDb(): Promise<Db> {
+    this.dbInstance ??= await getDatabase()
+    return this.dbInstance
   }
 
   // User Profile Operations
@@ -180,5 +183,206 @@ export class DatabaseService {
   // Get the default invoice number (always "1")
   static getDefaultInvoiceNumber() {
     return "1"
+  }
+
+  // Analytics methods
+  static async getCompanyAnalytics(userId: string, companyId?: string) {
+    const db = await this.getDb()
+    
+    if (companyId) {
+      // Get analytics for specific company
+      const company = await db.collection("companies").findOne({ _id: new ObjectId(companyId), userId })
+      if (!company) return null
+
+      const invoices = await db.collection<Invoice>("invoices").find({ companyId, userId }).toArray()
+      
+      const totalInvoices = invoices.length
+      const totalRevenue = invoices.reduce((sum: number, inv: Invoice) => sum + inv.total, 0)
+      const averageInvoice = totalInvoices > 0 ? totalRevenue / totalInvoices : 0
+
+      // Line item breakdown for this company
+      const lineItemBreakdown = await db
+        .collection("invoices")
+        .aggregate([
+          { $match: { companyId, userId } },
+          { $unwind: "$lineItems" },
+          {
+            $group: {
+              _id: "$lineItems.name",
+              count: { $sum: 1 },
+              totalRevenue: { $sum: "$lineItems.total" },
+              averagePrice: { $avg: "$lineItems.cost" },
+            },
+          },
+          { $sort: { totalRevenue: -1 } },
+        ])
+        .toArray()
+
+      // Monthly revenue for this company
+      const monthlyRevenue = await db
+        .collection("invoices")
+        .aggregate([
+          { $match: { companyId, userId } },
+          {
+            $group: {
+              _id: {
+                year: { $year: "$createdAt" },
+                month: { $month: "$createdAt" },
+              },
+              revenue: { $sum: "$total" },
+              invoiceCount: { $sum: 1 },
+            },
+          },
+          { $sort: { "_id.year": 1, "_id.month": 1 } },
+        ])
+        .toArray()
+
+      return {
+        company,
+        stats: { totalInvoices, totalRevenue, averageInvoice },
+        lineItemBreakdown,
+        monthlyRevenue: monthlyRevenue.map((item: any) => ({
+          month: `${item._id.year}-${String(item._id.month).padStart(2, "0")}`,
+          revenue: item.revenue,
+          invoiceCount: item.invoiceCount,
+        })),
+      }
+    } else {
+      // Get analytics for all companies
+      return await db
+        .collection("invoices")
+        .aggregate([
+          { $match: { userId } },
+          {
+            $lookup: {
+              from: "companies",
+              localField: "companyId",
+              foreignField: "_id",
+              as: "company",
+            },
+          },
+          { $unwind: "$company" },
+          {
+            $group: {
+              _id: "$companyId",
+              companyName: { $first: "$company.name" },
+              totalInvoices: { $sum: 1 },
+              totalRevenue: { $sum: "$total" },
+              averageInvoice: { $avg: "$total" },
+              lastInvoiceDate: { $max: "$createdAt" },
+            },
+          },
+          { $sort: { totalRevenue: -1 } },
+        ])
+        .toArray()
+    }
+  }
+
+  static async getUserAnalytics(userId: string) {
+    const db = await this.getDb()
+
+    // Get basic stats using existing methods
+    const [invoices, companies] = await Promise.all([
+      this.getInvoicesByUser(userId),
+      this.getCompaniesByUser(userId)
+    ])
+
+    const totalInvoices = invoices.length
+    const totalCompanies = companies.length
+    const totalRevenue = invoices.reduce((sum: number, inv: Invoice) => sum + inv.total, 0)
+    const averageInvoice = totalInvoices > 0 ? totalRevenue / totalInvoices : 0
+    const maxInvoice = totalInvoices > 0 ? Math.max(...invoices.map((inv: Invoice) => inv.total)) : 0
+    const minInvoice = totalInvoices > 0 ? Math.min(...invoices.map((inv: Invoice) => inv.total)) : 0
+
+    // Monthly revenue timeline
+    const monthlyRevenue = await db
+      .collection("invoices")
+      .aggregate([
+        { $match: { userId } },
+        {
+          $group: {
+            _id: {
+              year: { $year: "$createdAt" },
+              month: { $month: "$createdAt" },
+            },
+            revenue: { $sum: "$total" },
+            invoiceCount: { $sum: 1 },
+          },
+        },
+        { $sort: { "_id.year": 1, "_id.month": 1 } },
+      ])
+      .toArray()
+
+    // Invoice status distribution
+    const statusDistribution = await db
+      .collection("invoices")
+      .aggregate([
+        { $match: { userId } },
+        {
+          $group: {
+            _id: "$status",
+            count: { $sum: 1 },
+            totalAmount: { $sum: "$total" },
+          },
+        },
+      ])
+      .toArray()
+
+    // Top line items
+    const topLineItems = await db
+      .collection("invoices")
+      .aggregate([
+        { $match: { userId } },
+        { $unwind: "$lineItems" },
+        {
+          $group: {
+            _id: "$lineItems.name",
+            count: { $sum: 1 },
+            totalRevenue: { $sum: "$lineItems.total" },
+            averagePrice: { $avg: "$lineItems.cost" },
+          },
+        },
+        { $sort: { count: -1 } },
+        { $limit: 10 },
+      ])
+      .toArray()
+
+    // Recent activity (last 30 days)
+    const thirtyDaysAgo = new Date()
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+
+    const recentActivity = await db
+      .collection("invoices")
+      .aggregate([
+        { $match: { userId, createdAt: { $gte: thirtyDaysAgo } } },
+        {
+          $group: {
+            _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+            invoiceCount: { $sum: 1 },
+            revenue: { $sum: "$total" },
+          },
+        },
+        { $sort: { _id: 1 } },
+      ])
+      .toArray()
+
+    return {
+      basicStats: {
+        totalInvoices,
+        totalCompanies,
+        totalRevenue,
+        averageInvoice,
+        maxInvoice,
+        minInvoice,
+      },
+      monthlyRevenue: monthlyRevenue.map((item: any) => ({
+        month: `${item._id.year}-${String(item._id.month).padStart(2, "0")}`,
+        revenue: item.revenue,
+        invoiceCount: item.invoiceCount,
+      })),
+      statusDistribution,
+      topLineItems,
+      recentActivity,
+    }
   }
 }
