@@ -5,7 +5,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { FileText, Building2, DollarSign, TrendingUp, Plus } from "lucide-react"
 import Link from "next/link"
-import { Navbar } from "@/components/navbar"
 import { Skeleton } from "@/components/ui/skeleton"
 
 interface DashboardStats {
@@ -64,8 +63,6 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navbar />
-
       <main className="container mx-auto px-4 py-8">
         <div className="space-y-8">
           {/* Header */}
@@ -196,52 +193,62 @@ export default function DashboardPage() {
               <CardDescription>Your latest invoice activity</CardDescription>
             </CardHeader>
             <CardContent>
-              {loading ? (
-                <div className="space-y-4">
-                  {Array.from({ length: 3 }).map((_, i) => (
-                    <div key={i} className="flex items-center justify-between p-4 border rounded-lg">
-                      <div className="space-y-2">
-                        <Skeleton className="h-4 w-24" />
-                        <Skeleton className="h-3 w-32" />
-                      </div>
-                      <div className="text-right space-y-2">
-                        <Skeleton className="h-4 w-16" />
-                        <Skeleton className="h-3 w-20" />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : recentInvoices.length > 0 ? (
-                <div className="space-y-4">
-                  {recentInvoices.map((invoice) => (
-                    <div key={invoice._id} className="flex items-center justify-between p-4 border rounded-lg">
-                      <div className="space-y-1">
-                        <div className="font-medium">{invoice.invoiceNumber}</div>
-                        <div className="text-sm text-muted-foreground">{invoice.companyName}</div>
-                      </div>
-                      <div className="text-right space-y-1">
-                        <div className="font-medium">{formatCurrency(invoice.total)}</div>
-                        <div className="text-sm text-muted-foreground">
-                          {new Date(invoice.date).toLocaleDateString()}
+              {(() => {
+                if (loading) {
+                  return (
+                    <div className="space-y-4">
+                      {Array.from({ length: 3 }, (_, i) => (
+                        <div key={`skeleton-${i}`} className="flex items-center justify-between p-4 border rounded-lg">
+                          <div className="space-y-2">
+                            <Skeleton className="h-4 w-24" />
+                            <Skeleton className="h-3 w-32" />
+                          </div>
+                          <div className="text-right space-y-2">
+                            <Skeleton className="h-4 w-16" />
+                            <Skeleton className="h-3 w-20" />
+                          </div>
                         </div>
+                      ))}
+                    </div>
+                  )
+                }
+                
+                if (recentInvoices.length > 0) {
+                  return (
+                    <div className="space-y-4">
+                      {recentInvoices.map((invoice) => (
+                        <div key={invoice._id} className="flex items-center justify-between p-4 border rounded-lg">
+                          <div className="space-y-1">
+                            <div className="font-medium">{invoice.invoiceNumber}</div>
+                            <div className="text-sm text-muted-foreground">{invoice.companyName}</div>
+                          </div>
+                          <div className="text-right space-y-1">
+                            <div className="font-medium">{formatCurrency(invoice.total)}</div>
+                            <div className="text-sm text-muted-foreground">
+                              {new Date(invoice.date).toLocaleDateString()}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                      <div className="pt-4">
+                        <Link href="/invoices">
+                          <Button variant="outline" className="w-full bg-transparent">
+                            View All Invoices
+                          </Button>
+                        </Link>
                       </div>
                     </div>
-                  ))}
-                  <div className="pt-4">
-                    <Link href="/invoices">
-                      <Button variant="outline" className="w-full bg-transparent">
-                        View All Invoices
-                      </Button>
-                    </Link>
+                  )
+                }
+                
+                return (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <FileText className="mx-auto h-12 w-12 mb-4 opacity-50" />
+                    <p>No recent invoices</p>
+                    <p className="text-sm">Create your first invoice to get started</p>
                   </div>
-                </div>
-              ) : (
-                <div className="text-center py-8 text-muted-foreground">
-                  <FileText className="mx-auto h-12 w-12 mb-4 opacity-50" />
-                  <p>No recent invoices</p>
-                  <p className="text-sm">Create your first invoice to get started</p>
-                </div>
-              )}
+                )
+              })()}
             </CardContent>
           </Card>
         </div>

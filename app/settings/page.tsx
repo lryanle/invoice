@@ -1,6 +1,5 @@
 import { UserSettingsForm } from "@/components/user-settings-form"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Navbar } from "@/components/navbar"
 import { SettingsPageClient } from "./settings-page-client"
 
 interface SettingsPageProps {
@@ -13,8 +12,6 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
 
   return (
     <div className="min-h-screen bg-background">
-      <Navbar />
-
       <main className="container mx-auto px-4 py-8">
         <div className="mx-auto max-w-2xl space-y-6">
           <div className="space-y-2">

@@ -6,6 +6,7 @@ import { Analytics } from "@vercel/analytics/next"
 import { ClerkProvider } from "@clerk/nextjs"
 import { Suspense } from "react"
 import { Toaster } from "@/components/ui/toaster"
+import { ConditionalNavbar } from "@/components/conditional-navbar"
 import "./globals.css"
 
 export const metadata: Metadata = {
@@ -22,6 +23,7 @@ export default function RootLayout({
     <ClerkProvider>
       <html lang="en">
         <body className={`font-sans ${GeistSans.variable} ${GeistMono.variable}`}>
+          <ConditionalNavbar />
           <Suspense fallback={null}>{children}</Suspense>
           <Toaster />
           <Analytics />

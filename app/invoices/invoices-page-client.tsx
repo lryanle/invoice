@@ -22,7 +22,6 @@ import {
 } from "@/components/ui/table";
 import { DeleteInvoiceDialog } from "@/components/delete-invoice-dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Navbar } from "@/components/navbar";
 import {
   FileText,
   Plus,
@@ -311,8 +310,6 @@ export function InvoicesPageClient() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navbar />
-
       <main className="container mx-auto px-4 py-8">
         <div className="space-y-6">
           {/* Header */}

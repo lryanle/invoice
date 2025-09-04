@@ -1,5 +1,4 @@
 import { InvoiceForm } from "@/components/invoice-form"
-import { Navbar } from "@/components/navbar"
 import { validateProfileForInvoices } from "@/lib/profile-validation"
 
 export default async function NewInvoicePage() {
@@ -7,8 +6,6 @@ export default async function NewInvoicePage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navbar />
-
       {/* Main Content */}
       <main className="p-6">
         <div className="mx-auto max-w-7xl space-y-6">

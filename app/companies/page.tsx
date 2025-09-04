@@ -1,7 +1,6 @@
 import { CompanyList } from "@/components/company-list"
 import { CreateCompanyDialog } from "@/components/create-company-dialog"
 import { Button } from "@/components/ui/button"
-import { Navbar } from "@/components/navbar"
 import { validateProfileSetup } from "@/lib/profile-validation"
 import { Plus } from "lucide-react"
 
@@ -10,8 +9,6 @@ export default async function CompaniesPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navbar />
-
       <main className="container mx-auto px-4 py-8">
         <div className="space-y-6">
           {/* Page Header */}
