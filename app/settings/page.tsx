@@ -13,12 +13,14 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
   return (
     <div className="min-h-screen bg-background">
       <main className="container mx-auto px-4 py-8">
-        <div className="mx-auto max-w-2xl space-y-6">
+        <div className="space-y-6">
+          {/* Page Header */}
           <div className="space-y-2">
-            <h1 className="text-3xl font-bold text-foreground">User Settings</h1>
+            <h1 className="text-3xl font-bold text-foreground">Settings</h1>
             <p className="text-muted-foreground">Configure your default information for invoices</p>
           </div>
 
+          {/* Settings Content */}
           <Card>
             <CardHeader>
               <CardTitle>Profile Information</CardTitle>

@@ -22,6 +22,19 @@ export default function RootLayout({
   return (
     <ClerkProvider>
       <html lang="en">
+        <link rel="icon" href="/favicon.ico" sizes="any" />
+        <link
+          rel="icon"
+          href="/icon?<generated>"
+          type="image/<generated>"
+          sizes="<generated>"
+        />
+        <link
+          rel="apple-touch-icon"
+          href="/apple-icon?<generated>"
+          type="image/<generated>"
+          sizes="<generated>"
+        />
         <body className={`font-sans ${GeistSans.variable} ${GeistMono.variable}`}>
           <ConditionalNavbar />
           <Suspense fallback={null}>{children}</Suspense>

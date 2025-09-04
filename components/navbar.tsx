@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { FileText, Building2, Settings, BarChart3, TrendingUp } from "lucide-react"
 import { useEffect, useState } from "react"
+import Image from "next/image"
 
 export function Navbar() {
   const pathname = usePathname()
@@ -28,7 +29,7 @@ export function Navbar() {
       <div className="container mx-auto px-4">
         <div className="flex h-16 items-center justify-between">
           <Link href="/dashboard" className="flex items-center space-x-2">
-            <FileText className="h-6 w-6 text-primary" />
+            <Image src="/icon.svg" alt="invoice.lryanle.com logo" width={36} height={36} className="mb-1" />
             <span className="text-xl font-bold">invoice.lryanle.com</span>
           </Link>
 
