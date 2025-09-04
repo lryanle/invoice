@@ -47,6 +47,8 @@ interface LiveInvoicePreviewProps {
   companyId: string
   date: string
   dueDate: string
+  customerRef: string
+  invoiceNumber: string
   lineItems: LineItem[]
   tax: number
   notes: string
@@ -58,6 +60,8 @@ export function LiveInvoicePreview({
   companyId,
   date,
   dueDate,
+  customerRef,
+  invoiceNumber,
   lineItems,
   tax,
   notes,
@@ -67,7 +71,6 @@ export function LiveInvoicePreview({
   const [company, setCompany] = useState<Company | null>(null)
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
   const [loading, setLoading] = useState(true)
-  const [invoiceNumber] = useState(`INV-${String(Math.floor(Math.random() * 1000)).padStart(3, "0")}`)
 
   useEffect(() => {
     fetchData()
@@ -128,7 +131,7 @@ export function LiveInvoicePreview({
     const pageItems = validLineItems.slice(startIndex, endIndex)
 
     return (
-      <div key={pageNumber} className="bg-white text-black p-8 min-h-[800px] shadow-lg border rounded-lg">
+      <div key={pageNumber} className="bg-white text-black p-8 min-h-[800px] shadow-lg border rounded-lg relative">
         {/* Header with improved spacing */}
         <div className="flex justify-between items-start mb-10">
           <div className="space-y-3">
@@ -136,7 +139,7 @@ export function LiveInvoicePreview({
             <div className="text-sm space-y-1 text-gray-700">
               <div className="flex gap-2">
                 <span className="font-semibold min-w-20">Invoice #:</span>
-                <span>{invoiceNumber}</span>
+                <span>{invoiceNumber || "Not set"}</span>
               </div>
               <div className="flex gap-2">
                 <span className="font-semibold min-w-20">Date:</span>
@@ -146,6 +149,12 @@ export function LiveInvoicePreview({
                 <span className="font-semibold min-w-20">Due Date:</span>
                 <span>{dueDate ? new Date(dueDate).toLocaleDateString() : "Not set"}</span>
               </div>
+              {customerRef && (
+                <div className="flex gap-2">
+                  <span className="font-semibold min-w-20">Reference:</span>
+                  <span>{customerRef}</span>
+                </div>
+              )}
             </div>
           </div>
           {pageNumber === 0 && (

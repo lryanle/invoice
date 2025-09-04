@@ -5,9 +5,15 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { FileText, Building2, Settings, BarChart3, TrendingUp } from "lucide-react"
+import { useEffect, useState } from "react"
 
 export function Navbar() {
   const pathname = usePathname()
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   const navItems = [
     { href: "/dashboard", label: "Dashboard", icon: BarChart3 },
@@ -47,7 +53,7 @@ export function Navbar() {
             })}
           </div>
 
-          <UserButton afterSignOutUrl="/" />
+          {mounted && <UserButton afterSignOutUrl="/" />}
         </div>
       </div>
     </nav>

@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/dialog"
 import { Separator } from "@/components/ui/separator"
 import { useToast } from "@/hooks/use-toast"
-import { Loader2, Building2, Mail, MapPin } from "lucide-react"
+import { Loader2, Building, Mail, MapPin } from "lucide-react"
 
 interface CompanyFormData {
   name: string
@@ -122,128 +122,129 @@ export function CreateCompanyDialog({ children, onCompanyCreated }: CreateCompan
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[500px] max-h-[90vh] min-h-[400px]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Building2 className="h-5 w-5 text-primary" />
+            <Building className="h-5 w-5 text-primary" />
             Add New Company
           </DialogTitle>
           <DialogDescription>Add a company that you'll be sending invoices to</DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Company Information */}
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="name">Company Name *</Label>
-              <Input
-                id="name"
-                value={formData.name}
-                onChange={(e) => updateFormData("name", e.target.value)}
-                placeholder="Enter company name"
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="email">Email Address *</Label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="email"
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => updateFormData("email", e.target.value)}
-                  placeholder="Enter company email"
-                  className="pl-10"
-                  required
-                />
-              </div>
-            </div>
-          </div>
-
-          <Separator />
-
-          {/* Address Information */}
-          <div className="space-y-4">
-            <div className="flex items-center gap-2">
-              <MapPin className="h-4 w-4 text-primary" />
-              <Label className="text-sm font-medium">Company Address</Label>
-            </div>
-
+        <form onSubmit={handleSubmit}>
+          <div className="overflow-y-auto max-h-[calc(90vh-200px)] min-h-[200px] space-y-4 p-1">
+            {/* Company Information */}
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="street1">Street Address 1 *</Label>
+                <Label htmlFor="name">Company Name <span className="text-red-500">*</span></Label>
                 <Input
-                  id="street1"
-                  value={formData.address.street1}
-                  onChange={(e) => updateFormData("address.street1", e.target.value)}
-                  placeholder="Enter street address"
+                  id="name"
+                  value={formData.name}
+                  onChange={(e) => updateFormData("name", e.target.value)}
+                  placeholder="Enter company name"
                   required
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="street2">Street Address 2</Label>
-                <Input
-                  id="street2"
-                  value={formData.address.street2}
-                  onChange={(e) => updateFormData("address.street2", e.target.value)}
-                  placeholder="Suite, floor, etc. (optional)"
-                />
-              </div>
-
-              <div className="grid gap-4 grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="city">City *</Label>
+                <Label htmlFor="email">Email Address <span className="text-red-500">*</span></Label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                   <Input
-                    id="city"
-                    value={formData.address.city}
-                    onChange={(e) => updateFormData("address.city", e.target.value)}
-                    placeholder="Enter city"
-                    required
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="state">State/Province *</Label>
-                  <Input
-                    id="state"
-                    value={formData.address.state}
-                    onChange={(e) => updateFormData("address.state", e.target.value)}
-                    placeholder="Enter state"
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="grid gap-4 grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="country">Country *</Label>
-                  <Input
-                    id="country"
-                    value={formData.address.country}
-                    onChange={(e) => updateFormData("address.country", e.target.value)}
-                    placeholder="Enter country"
-                    required
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="zip">ZIP/Postal Code *</Label>
-                  <Input
-                    id="zip"
-                    value={formData.address.zip}
-                    onChange={(e) => updateFormData("address.zip", e.target.value)}
-                    placeholder="Enter ZIP code"
+                    id="email"
+                    type="email"
+                    value={formData.email}
+                    onChange={(e) => updateFormData("email", e.target.value)}
+                    placeholder="Enter company email"
+                    className="pl-10"
                     required
                   />
                 </div>
               </div>
             </div>
-          </div>
 
-          <DialogFooter>
+            <Separator />
+
+            {/* Address Information */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-2">
+                <MapPin className="h-4 w-4 text-primary" />
+                <Label className="text-sm font-medium">Company Address</Label>
+              </div>
+
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="street1">Street Address 1 <span className="text-red-500">*</span></Label>
+                  <Input
+                    id="street1"
+                    value={formData.address.street1}
+                    onChange={(e) => updateFormData("address.street1", e.target.value)}
+                    placeholder="Enter street address"
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="street2">Street Address 2</Label>
+                  <Input
+                    id="street2"
+                    value={formData.address.street2}
+                    onChange={(e) => updateFormData("address.street2", e.target.value)}
+                    placeholder="Suite, floor, etc. (optional)"
+                  />
+                </div>
+
+                <div className="grid gap-4 grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="city">City <span className="text-red-500">*</span></Label>
+                    <Input
+                      id="city"
+                      value={formData.address.city}
+                      onChange={(e) => updateFormData("address.city", e.target.value)}
+                      placeholder="Enter city"
+                      required
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="state">State/Province <span className="text-red-500">*</span></Label>
+                    <Input
+                      id="state"
+                      value={formData.address.state}
+                      onChange={(e) => updateFormData("address.state", e.target.value)}
+                      placeholder="Enter state"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="grid gap-4 grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="country">Country <span className="text-red-500">*</span></Label>
+                    <Input
+                      id="country"
+                      value={formData.address.country}
+                      onChange={(e) => updateFormData("address.country", e.target.value)}
+                      placeholder="Enter country"
+                      required
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="zip">ZIP/Postal Code <span className="text-red-500">*</span></Label>
+                    <Input
+                      id="zip"
+                      value={formData.address.zip}
+                      onChange={(e) => updateFormData("address.zip", e.target.value)}
+                      placeholder="Enter ZIP code"
+                      required
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <DialogFooter className="py-2">
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>
               Cancel
             </Button>

@@ -5,8 +5,8 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Plus, Trash2, Package } from "lucide-react"
+import { Plus, Package, X } from "lucide-react"
+import { CreatableCombobox } from "./ui/combobox-createable"
 
 interface LineItem {
   name: string
@@ -24,6 +24,8 @@ interface LineItemsSectionProps {
 interface LineItemSuggestion {
   name: string
   count: number
+  recentCost?: number
+  lastUsed?: string
 }
 
 export function LineItemsSection({ lineItems, onLineItemsChange }: LineItemsSectionProps) {
@@ -45,6 +47,19 @@ export function LineItemsSection({ lineItems, onLineItemsChange }: LineItemsSect
     }
   }
 
+  const fetchRecentCost = async (itemName: string) => {
+    try {
+      const response = await fetch(`/api/line-items/recent-cost?itemName=${encodeURIComponent(itemName)}`)
+      if (response.ok) {
+        const data = await response.json()
+        return data.recentCost || 0
+      }
+    } catch (error) {
+      console.error("Error fetching recent cost:", error)
+    }
+    return 0
+  }
+
   const updateLineItem = (index: number, field: keyof LineItem, value: string | number) => {
     const updatedItems = [...lineItems]
     updatedItems[index] = {
@@ -61,7 +76,7 @@ export function LineItemsSection({ lineItems, onLineItemsChange }: LineItemsSect
   }
 
   const addLineItem = () => {
-    onLineItemsChange([...lineItems, { name: "", description: "", quantity: 1, cost: 0, total: 0 }])
+    onLineItemsChange([...lineItems, { name: "", description: "", quantity: 1.0, cost: 0, total: 0 }])
   }
 
   const removeLineItem = (index: number) => {
@@ -71,11 +86,45 @@ export function LineItemsSection({ lineItems, onLineItemsChange }: LineItemsSect
     }
   }
 
-  const handleNameSelect = (index: number, value: string) => {
-    if (value === "custom") {
-      updateLineItem(index, "name", "")
-    } else {
-      updateLineItem(index, "name", value)
+  const handleItemSelect = async (itemName: string, itemIndex: number) => {
+    // Fetch the recent cost first
+    const recentCost = await fetchRecentCost(itemName)
+    
+    // Update both name and cost in a single operation
+    const updatedItems = [...lineItems]
+    updatedItems[itemIndex] = {
+      ...updatedItems[itemIndex],
+      name: itemName,
+      cost: recentCost > 0 ? recentCost : updatedItems[itemIndex].cost,
+      total: updatedItems[itemIndex].quantity * (recentCost > 0 ? recentCost : updatedItems[itemIndex].cost)
+    }
+    
+    onLineItemsChange(updatedItems)
+  }
+
+  const handleCreateItem = async (itemName: string, itemIndex: number) => {
+    try {
+      // Add the new item to suggestions locally for immediate UI update
+      const newSuggestion = { name: itemName, count: 1, isNew: true }
+      setSuggestions(prev => {
+        const existing = prev.find(s => s.name === itemName)
+        if (existing) {
+          return prev.map(s => s.name === itemName ? { ...s, count: s.count + 1 } : s)
+        }
+        return [...prev, newSuggestion]
+      })
+      
+      // Auto-select the newly created item
+      updateLineItem(itemIndex, "name", itemName)
+      
+      // Optionally, you could also save this to the backend here
+      // await fetch("/api/line-items/suggestions", {
+      //   method: "POST",
+      //   headers: { "Content-Type": "application/json" },
+      //   body: JSON.stringify({ name: itemName })
+      // })
+    } catch (error) {
+      console.error("Error creating new item:", error)
     }
   }
 
@@ -87,99 +136,94 @@ export function LineItemsSection({ lineItems, onLineItemsChange }: LineItemsSect
       </div>
 
       {lineItems.map((item, index) => (
-        <div key={index} className="space-y-4 p-6 border rounded-lg bg-card">
-          <div className="flex items-center justify-between">
-            <Label className="text-sm font-medium">Item {index + 1}</Label>
+        <div key={`Item ${index + 1}`} className="border-2 rounded-lg bg-card transition-all hover:drop-shadow">
+          <div className="flex justify-between items-center w-full bg-border rounded-t-md py-3 px-6">
+            <h2 className="text-lg font-medium leading-none tracking-wide">Item {index + 1}{item.name ? `:   ${item.name}` : ""}</h2>
             {lineItems.length > 1 && (
               <Button
-                variant="ghost"
-                size="sm"
+                variant={null}
+                size="icon"
                 onClick={() => removeLineItem(index)}
-                className="text-destructive hover:text-destructive"
+                className="text-muted-foreground hover:text-destructive h-4 w-4"
               >
-                <Trash2 className="h-4 w-4" />
+                <X className="h-4 w-4" />
               </Button>
             )}
           </div>
-
-          <div className="space-y-4">
-            {/* Item Name */}
-            <div className="space-y-2">
-              <Label htmlFor={`name-${index}`}>Item Name *</Label>
-              <Select value={item.name || "custom"} onValueChange={(value) => handleNameSelect(index, value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select or enter item name" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="custom">
-                    <span className="text-muted-foreground">Enter custom name...</span>
-                  </SelectItem>
-                  {suggestions.map((suggestion) => (
-                    <SelectItem key={suggestion.name} value={suggestion.name}>
-                      <div className="flex items-center justify-between w-full">
-                        <span>{suggestion.name}</span>
-                        <span className="text-xs text-muted-foreground ml-2">({suggestion.count} times)</span>
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {(item.name === "" || !suggestions.find((s) => s.name === item.name)) && (
-                <Input
-                  id={`name-${index}`}
-                  value={item.name}
-                  onChange={(e) => updateLineItem(index, "name", e.target.value)}
-                  placeholder="Enter item name"
-                  className="mt-2"
-                />
-              )}
-            </div>
-
-            {/* Description */}
-            <div className="space-y-2">
-              <Label htmlFor={`description-${index}`}>Description</Label>
-              <Textarea
-                id={`description-${index}`}
-                value={item.description}
-                onChange={(e) => updateLineItem(index, "description", e.target.value)}
-                placeholder="Enter item description (optional)"
-                rows={2}
-                className="resize-none"
-              />
-            </div>
-
-            {/* Quantity, Cost, and Total with improved spacing */}
-            <div className="grid gap-4 md:grid-cols-3">
+          <div className="p-6">
+            <div className="space-y-4">
+              {/* Item Name */}
               <div className="space-y-2">
-                <Label htmlFor={`quantity-${index}`}>Quantity *</Label>
-                <Input
-                  id={`quantity-${index}`}
-                  type="number"
-                  min="1"
-                  step="1"
-                  value={item.quantity}
-                  onChange={(e) => updateLineItem(index, "quantity", Number.parseInt(e.target.value) || 1)}
-                  placeholder="1"
+                <Label htmlFor={`name-${index}`}>Item Name <span className="text-red-500">*</span></Label>
+                <CreatableCombobox
+                  options={suggestions.map((suggestion) => ({
+                    value: suggestion.name,
+                    label: suggestion.name,
+                    count: suggestion.count,
+                    recentCost: suggestion.recentCost,
+                    isNew: suggestion.count === 1 && !suggestion.recentCost
+                  }))}
+                  value={item.name || null}
+                  onChange={(option) => {
+                    if (option) {
+                      handleItemSelect(option.value, index)
+                    } else {
+                      updateLineItem(index, "name", "")
+                    }
+                  }}
+                  onCreate={(itemName) => handleCreateItem(itemName, index)}
+                  placeholder="Select or create item name"
+                  emptyMessage="No items found"
+                  allowClear={false}
                 />
               </div>
 
+              {/* Description */}
               <div className="space-y-2">
-                <Label htmlFor={`cost-${index}`}>Unit Cost ($) *</Label>
-                <Input
-                  id={`cost-${index}`}
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={item.cost}
-                  onChange={(e) => updateLineItem(index, "cost", Number.parseFloat(e.target.value) || 0)}
-                  placeholder="0.00"
+                <Label htmlFor={`description-${index}`}>Description</Label>
+                <Textarea
+                  id={`description-${index}`}
+                  value={item.description}
+                  onChange={(e) => updateLineItem(index, "description", e.target.value)}
+                  placeholder="Enter item description (optional)"
+                  rows={2}
+                  className="resize-none"
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label className="text-sm text-muted-foreground">Total</Label>
-                <div className="h-10 flex items-center justify-end px-3 bg-muted rounded-md">
-                  <span className="text-lg font-semibold text-primary">${item.total.toFixed(2)}</span>
+              {/* Quantity, Cost, and Total with improved spacing */}
+              <div className="grid gap-4 md:grid-cols-3">
+                <div className="space-y-2">
+                  <Label htmlFor={`quantity-${index}`}>Quantity <span className="text-red-500">*</span></Label>
+                  <Input
+                    id={`quantity-${index}`}
+                    type="number"
+                    min="0"
+                    step="1"
+                    value={item.quantity}
+                    onChange={(e) => updateLineItem(index, "quantity", Number.parseFloat(e.target.value) || 0)}
+                    placeholder="1"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor={`cost-${index}`}>Unit Cost ($) <span className="text-red-500">*</span></Label>
+                  <Input
+                    id={`cost-${index}`}
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={item.cost}
+                    onChange={(e) => updateLineItem(index, "cost", Number.parseFloat(e.target.value) || 0)}
+                    placeholder="0.00"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-sm text-muted-foreground leading-none">Total</Label>
+                  <div className="h-10 flex items-center justify-end px-3 bg-muted rounded-md">
+                    <span className="text-lg font-semibold text-primary select-all">${item.total.toFixed(2)}</span>
+                  </div>
                 </div>
               </div>
             </div>

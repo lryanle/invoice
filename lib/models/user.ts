@@ -52,11 +52,12 @@ export interface Invoice {
   invoiceNumber: string
   date: Date
   dueDate: Date
+  customerRef?: string // Customer reference field
   lineItems: LineItem[]
   subtotal: number
   tax?: number
   total: number
-  status: "draft" | "sent" | "paid" | "overdue"
+  status: "draft" | "complete"
   notes?: string
   createdAt: Date
   updatedAt: Date

@@ -2,6 +2,7 @@ import { type NextRequest, NextResponse } from "next/server"
 import { auth } from "@clerk/nextjs/server"
 import { DatabaseService } from "@/lib/database"
 import { PDFGenerator } from "@/lib/pdf-generator"
+import { formatCompanyNameForFilename } from "@/lib/utils"
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -36,6 +37,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       invoiceNumber: invoice.invoiceNumber,
       date: invoice.date.toISOString(),
       dueDate: invoice.dueDate.toISOString(),
+      customerRef: invoice.customerRef,
       userProfile,
       company,
       lineItems: invoice.lineItems,
@@ -48,10 +50,13 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     // Return PDF as buffer
     const pdfBuffer = Buffer.from(pdf.output("arraybuffer"))
 
+    const formattedCompanyName = formatCompanyNameForFilename(company.name)
+    const filename = `invoice-${formattedCompanyName}-${invoice.invoiceNumber}.pdf`
+
     return new NextResponse(pdfBuffer, {
       headers: {
         "Content-Type": "application/pdf",
-        "Content-Disposition": `attachment; filename="invoice-${invoice.invoiceNumber}.pdf"`,
+        "Content-Disposition": `attachment; filename="${filename}"`,
       },
     })
   } catch (error) {

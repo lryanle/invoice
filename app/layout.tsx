@@ -9,9 +9,8 @@ import { Toaster } from "@/components/ui/toaster"
 import "./globals.css"
 
 export const metadata: Metadata = {
-  title: "Invoice Generator Pro",
-  description: "Professional invoice generator with PDF export and company management",
-  generator: "v0.app",
+  title: "invoice.lryanle.com",
+  description: "Easy invoice management",
 }
 
 export default function RootLayout({

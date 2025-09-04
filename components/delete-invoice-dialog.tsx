@@ -71,7 +71,7 @@ export function DeleteInvoiceDialog({ children, invoice, onInvoiceDeleted }: Del
           <AlertDialogAction
             onClick={handleDelete}
             disabled={loading}
-            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            className="bg-destructive hover:bg-destructive/90"
           >
             {loading ? (
               <>

@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/dialog"
 import { Separator } from "@/components/ui/separator"
 import { useToast } from "@/hooks/use-toast"
-import { Loader2, Building2, Mail, MapPin } from "lucide-react"
+import { Loader2, Building, Mail, MapPin } from "lucide-react"
 
 interface Company {
   _id: string
@@ -115,7 +115,7 @@ export function EditCompanyDialog({ children, company, onCompanyUpdated }: EditC
       <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Building2 className="h-5 w-5 text-primary" />
+            <Building className="h-5 w-5 text-primary" />
             Edit Company
           </DialogTitle>
           <DialogDescription>Update the company information</DialogDescription>
@@ -125,7 +125,7 @@ export function EditCompanyDialog({ children, company, onCompanyUpdated }: EditC
           {/* Company Information */}
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="edit-name">Company Name *</Label>
+              <Label htmlFor="edit-name">Company Name <span className="text-red-500">*</span></Label>
               <Input
                 id="edit-name"
                 value={formData.name}
@@ -136,7 +136,7 @@ export function EditCompanyDialog({ children, company, onCompanyUpdated }: EditC
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="edit-email">Email Address *</Label>
+              <Label htmlFor="edit-email">Email Address <span className="text-red-500">*</span></Label>
               <div className="relative">
                 <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                 <Input
@@ -163,7 +163,7 @@ export function EditCompanyDialog({ children, company, onCompanyUpdated }: EditC
 
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="edit-street1">Street Address 1 *</Label>
+                <Label htmlFor="edit-street1">Street Address 1 <span className="text-red-500">*</span></Label>
                 <Input
                   id="edit-street1"
                   value={formData.address.street1}
@@ -185,7 +185,7 @@ export function EditCompanyDialog({ children, company, onCompanyUpdated }: EditC
 
               <div className="grid gap-4 grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor="edit-city">City *</Label>
+                  <Label htmlFor="edit-city">City <span className="text-red-500">*</span></Label>
                   <Input
                     id="edit-city"
                     value={formData.address.city}
@@ -196,7 +196,7 @@ export function EditCompanyDialog({ children, company, onCompanyUpdated }: EditC
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="edit-state">State/Province *</Label>
+                  <Label htmlFor="edit-state">State/Province <span className="text-red-500">*</span></Label>
                   <Input
                     id="edit-state"
                     value={formData.address.state}
@@ -209,7 +209,7 @@ export function EditCompanyDialog({ children, company, onCompanyUpdated }: EditC
 
               <div className="grid gap-4 grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor="edit-country">Country *</Label>
+                  <Label htmlFor="edit-country">Country <span className="text-red-500">*</span></Label>
                   <Input
                     id="edit-country"
                     value={formData.address.country}
@@ -220,7 +220,7 @@ export function EditCompanyDialog({ children, company, onCompanyUpdated }: EditC
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="edit-zip">ZIP/Postal Code *</Label>
+                  <Label htmlFor="edit-zip">ZIP/Postal Code <span className="text-red-500">*</span></Label>
                   <Input
                     id="edit-zip"
                     value={formData.address.zip}

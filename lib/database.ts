@@ -120,32 +120,65 @@ export class DatabaseService {
     return await db.collection<Invoice>("invoices").deleteOne({ _id: new ObjectId(id) })
   }
 
-  // Get top 10 most common line item names for a user
+  // Get top 10 most common line item names for a user with usage count and recent cost
   static async getTopLineItems(userId: string, limit = 10) {
     const db = await this.getDb()
 
     const pipeline = [
       { $match: { userId } },
       { $unwind: "$lineItems" },
-      { $group: { _id: "$lineItems.name", count: { $sum: 1 } } },
+      { 
+        $group: { 
+          _id: "$lineItems.name", 
+          count: { $sum: 1 },
+          recentCost: { $last: "$lineItems.cost" },
+          lastUsed: { $max: "$createdAt" }
+        } 
+      },
       { $sort: { count: -1 } },
       { $limit: limit },
-      { $project: { name: "$_id", count: 1, _id: 0 } },
+      { $project: { name: "$_id", count: 1, recentCost: 1, lastUsed: 1, _id: 0 } },
     ]
 
     return await db.collection<Invoice>("invoices").aggregate(pipeline).toArray()
   }
 
-  // Generate next invoice number for a user
-  static async generateInvoiceNumber(userId: string) {
+  // Get the most recent cost for a specific line item
+  static async getRecentCostForItem(userId: string, itemName: string) {
     const db = await this.getDb()
-    const lastInvoice = await db.collection<Invoice>("invoices").findOne({ userId }, { sort: { createdAt: -1 } })
+    
+    const pipeline = [
+      { $match: { userId } },
+      { $unwind: "$lineItems" },
+      { $match: { "lineItems.name": itemName } },
+      { $sort: { createdAt: -1 } },
+      { $limit: 1 },
+      { $project: { cost: "$lineItems.cost", _id: 0 } }
+    ]
+
+    const result = await db.collection<Invoice>("invoices").aggregate(pipeline).toArray()
+    return result.length > 0 ? result[0].cost : null
+  }
+
+  // Generate next invoice number for a specific company
+  static async generateInvoiceNumber(userId: string, companyId: string) {
+    const db = await this.getDb()
+    const lastInvoice = await db.collection<Invoice>("invoices").findOne(
+      { userId, companyId }, 
+      { sort: { createdAt: -1 } }
+    )
 
     if (!lastInvoice) {
-      return "INV-001"
+      return "1"
     }
 
-    const lastNumber = Number.parseInt(lastInvoice.invoiceNumber.split("-")[1] || "0")
-    return `INV-${String(lastNumber + 1).padStart(3, "0")}`
+    // Extract the numeric part from the invoice number
+    const lastNumber = Number.parseInt(lastInvoice.invoiceNumber) || 0
+    return String(lastNumber + 1)
+  }
+
+  // Get the default invoice number (always "1")
+  static getDefaultInvoiceNumber() {
+    return "1"
   }
 }

@@ -4,6 +4,7 @@ interface InvoiceData {
   invoiceNumber: string
   date: string
   dueDate: string
+  customerRef?: string
   userProfile: {
     fullName: string
     email: string
@@ -31,6 +32,7 @@ interface InvoiceData {
   }
   lineItems: Array<{
     name: string
+    description: string
     quantity: number
     cost: number
     total: number
@@ -42,16 +44,16 @@ interface InvoiceData {
 }
 
 export class PDFGenerator {
-  private doc: jsPDF
-  private pageWidth: number
-  private pageHeight: number
-  private margin: number
+  private readonly doc: jsPDF
+  private readonly pageWidth: number
+  private readonly pageHeight: number
+  private readonly margin: number
 
   constructor() {
     this.doc = new jsPDF()
     this.pageWidth = this.doc.internal.pageSize.getWidth()
     this.pageHeight = this.doc.internal.pageSize.getHeight()
-    this.margin = 20
+    this.margin = 15 // Much smaller margins for more space
   }
 
   generateInvoicePDF(invoiceData: InvoiceData): jsPDF {
@@ -59,202 +61,262 @@ export class PDFGenerator {
     this.addInvoiceDetails(invoiceData)
     this.addBillingInfo(invoiceData)
     this.addLineItems(invoiceData)
-    this.addTotals(invoiceData)
-    this.addNotes(invoiceData)
-    this.addFooter()
+    this.addNotesAndTotals(invoiceData)
 
     return this.doc
   }
 
   private addHeader(invoiceData: InvoiceData) {
-    // Company header
-    this.doc.setFontSize(24)
+    // Create smaller teal header background
+    const headerHeight = 48
+    this.doc.setFillColor(21, 93, 252)
+    this.doc.rect(0, 0, this.pageWidth, headerHeight, "F")
+
+    // Invoice title (no icon)
+    this.doc.setFontSize(30)
     this.doc.setFont("helvetica", "bold")
-    this.doc.text("INVOICE", this.pageWidth - this.margin, 30, { align: "right" })
+    this.doc.setTextColor(255, 255, 255) // White
+    this.doc.text("Invoice", this.margin, 20)
 
-    // Invoice number and date
+    // Company info on the right side of teal header
+    const rightX = this.pageWidth - this.margin
+    let yPos = 15
+    
     this.doc.setFontSize(12)
-    this.doc.setFont("helvetica", "normal")
-    this.doc.text(`Invoice #: ${invoiceData.invoiceNumber}`, this.pageWidth - this.margin, 45, { align: "right" })
-    this.doc.text(`Date: ${new Date(invoiceData.date).toLocaleDateString()}`, this.pageWidth - this.margin, 55, {
-      align: "right",
-    })
-    this.doc.text(`Due Date: ${new Date(invoiceData.dueDate).toLocaleDateString()}`, this.pageWidth - this.margin, 65, {
-      align: "right",
-    })
-  }
-
-  private addInvoiceDetails(invoiceData: InvoiceData) {
-    let yPos = 30
-
-    // From section
-    this.doc.setFontSize(14)
     this.doc.setFont("helvetica", "bold")
-    this.doc.text("From:", this.margin, yPos)
-
-    yPos += 10
-    this.doc.setFontSize(12)
+    this.doc.text(invoiceData.userProfile.fullName, rightX, yPos, { align: "right" })
+    
+    yPos += 6
+    this.doc.setFontSize(10)
     this.doc.setFont("helvetica", "normal")
-    this.doc.text(invoiceData.userProfile.fullName, this.margin, yPos)
-
-    yPos += 8
-    this.doc.text(invoiceData.userProfile.email, this.margin, yPos)
-
-    if (invoiceData.userProfile.phone) {
-      yPos += 8
-      this.doc.text(invoiceData.userProfile.phone, this.margin, yPos)
-    }
-
-    yPos += 8
-    this.doc.text(invoiceData.userProfile.address.street1, this.margin, yPos)
+    this.doc.text(invoiceData.userProfile.address.street1, rightX, yPos, { align: "right" })
 
     if (invoiceData.userProfile.address.street2) {
-      yPos += 8
-      this.doc.text(invoiceData.userProfile.address.street2, this.margin, yPos)
+      yPos += 5
+      this.doc.text(invoiceData.userProfile.address.street2, rightX, yPos, { align: "right" })
     }
-
-    yPos += 8
+    
+    yPos += 5
     this.doc.text(
       `${invoiceData.userProfile.address.city}, ${invoiceData.userProfile.address.state} ${invoiceData.userProfile.address.zip}`,
-      this.margin,
+      rightX,
       yPos,
+      { align: "right" }
     )
-
-    yPos += 8
-    this.doc.text(invoiceData.userProfile.address.country, this.margin, yPos)
+    
+    yPos += 5
+    this.doc.text(invoiceData.userProfile.address.country, rightX, yPos, { align: "right" })
   }
 
   private addBillingInfo(invoiceData: InvoiceData) {
-    let yPos = 100
+    // Bill To section on the left side
+    let yPos = 60
 
-    // Bill To section
-    this.doc.setFontSize(14)
+    // Bill To header
+    this.doc.setFontSize(10)
     this.doc.setFont("helvetica", "bold")
-    this.doc.text("Bill To:", this.margin, yPos)
+    this.doc.setTextColor(0, 0, 0)
+    this.doc.text("BILL TO:", this.margin, yPos)
 
-    yPos += 10
+    yPos += 8
+    // Company name in bold
     this.doc.setFontSize(12)
-    this.doc.setFont("helvetica", "normal")
+    this.doc.setFont("helvetica", "bold")
     this.doc.text(invoiceData.company.name, this.margin, yPos)
 
-    yPos += 8
-    this.doc.text(invoiceData.company.email, this.margin, yPos)
-
-    yPos += 8
+    this.doc.setFontSize(10)
+    yPos += 6
+    this.doc.setFont("helvetica", "normal")
     this.doc.text(invoiceData.company.address.street1, this.margin, yPos)
 
     if (invoiceData.company.address.street2) {
-      yPos += 8
+      yPos += 5
       this.doc.text(invoiceData.company.address.street2, this.margin, yPos)
     }
 
-    yPos += 8
+    yPos += 5
     this.doc.text(
       `${invoiceData.company.address.city}, ${invoiceData.company.address.state} ${invoiceData.company.address.zip}`,
       this.margin,
       yPos,
     )
 
-    yPos += 8
+    yPos += 5
     this.doc.text(invoiceData.company.address.country, this.margin, yPos)
+    
+    // Add line separator
+    yPos += 8
+    this.doc.setDrawColor(200, 200, 200)
+    this.doc.line(this.margin * (2/3), yPos, this.pageWidth - this.margin * (2/3), yPos)
+  }
+
+  private addInvoiceDetails(invoiceData: InvoiceData) {
+    // Invoice details in top right of white area
+    const rightX = this.pageWidth - this.margin
+    const invoiceDetailsOffset = rightX - 55
+    let yPos = 60
+    
+    this.doc.setFontSize(10)
+    this.doc.setFont("helvetica", "bold")
+    this.doc.setTextColor(0, 0, 0)
+    
+    // Invoice number
+    this.doc.text("INVOICE #", invoiceDetailsOffset, yPos)
+    this.doc.setFont("helvetica", "normal")
+    this.doc.text(invoiceData.invoiceNumber, rightX, yPos, { align: "right" })
+    
+    yPos += 8
+    // Date
+    this.doc.setFont("helvetica", "bold")
+    this.doc.text("DATE", invoiceDetailsOffset, yPos)
+    this.doc.setFont("helvetica", "normal")
+    this.doc.text(new Date(invoiceData.date).toLocaleDateString(), rightX, yPos, { align: "right" })
+    
+    yPos += 8
+    // Due Date
+    this.doc.setFont("helvetica", "bold")
+    this.doc.text("INVOICE DUE DATE", invoiceDetailsOffset, yPos)
+    this.doc.setFont("helvetica", "normal")
+    this.doc.text(new Date(invoiceData.dueDate).toLocaleDateString(), rightX, yPos, { align: "right" })
+    
+    // Customer Reference (if provided)
+    if (invoiceData.customerRef) {
+      yPos += 8
+      this.doc.setFont("helvetica", "bold")
+      this.doc.text("REFERENCE", invoiceDetailsOffset, yPos)
+      this.doc.setFont("helvetica", "normal")
+      this.doc.text(invoiceData.customerRef, rightX, yPos, { align: "right" })
+    }
   }
 
   private addLineItems(invoiceData: InvoiceData) {
-    let yPos = 180
+    let yPos = 107
 
-    // Table header
-    this.doc.setFontSize(12)
+    // Table headers
+    this.doc.setFontSize(10)
     this.doc.setFont("helvetica", "bold")
+    this.doc.setTextColor(0, 0, 0)
 
-    // Draw table header background
-    this.doc.setFillColor(240, 240, 240)
-    this.doc.rect(this.margin, yPos - 5, this.pageWidth - 2 * this.margin, 15, "F")
+    // Column positions
+    const col1 = this.margin // Item name
+    const col2 = this.margin + 33 // Description
+    const col5 = this.pageWidth - this.margin*1.25 // Amount/Total
+    const col4 = col5 - (this.margin*1.25 + 5) // Price
+    const col3 = col4 - (this.margin*1.25 + 5) // Quantity
 
     // Header text
-    this.doc.text("Description", this.margin + 5, yPos + 5)
-    this.doc.text("Qty", this.pageWidth - 80, yPos + 5, { align: "center" })
-    this.doc.text("Rate", this.pageWidth - 50, yPos + 5, { align: "center" })
-    this.doc.text("Amount", this.pageWidth - this.margin - 5, yPos + 5, { align: "right" })
+    this.doc.text("ITEMS", col1, yPos)
+    this.doc.text("DESCRIPTION", col2, yPos)
+    this.doc.text("QTY", col3, yPos, { align: "right" })
+    this.doc.text("PRICE", col4, yPos, { align: "right" })
+    this.doc.text("AMOUNT", col5, yPos, { align: "right" })
 
-    yPos += 20
+    yPos += 8
 
     // Line items
     this.doc.setFont("helvetica", "normal")
-    invoiceData.lineItems.forEach((item) => {
+    this.doc.setFontSize(10)
+    
+    invoiceData.lineItems.forEach((item, index) => {
       // Check if we need a new page
-      if (yPos > this.pageHeight - 60) {
+      if (yPos > this.pageHeight - 40) {
         this.doc.addPage()
         yPos = 30
       }
 
-      this.doc.text(item.name, this.margin + 5, yPos)
-      this.doc.text(item.quantity.toString(), this.pageWidth - 80, yPos, { align: "center" })
-      this.doc.text(`$${item.cost.toFixed(2)}`, this.pageWidth - 50, yPos, { align: "center" })
-      this.doc.text(`$${item.total.toFixed(2)}`, this.pageWidth - this.margin - 5, yPos, { align: "right" })
+      // Item data with text wrapping
+      const itemText = item.name
+      const descriptionText = item.description
+      const quantityText = item.quantity.toString()
+      const priceText = `$${item.cost.toFixed(2)}`
+      const amountText = `$${item.total.toFixed(2)}`
 
-      yPos += 15
+      // Calculate if text needs wrapping based on new column positions
+      const itemWidth = col2 - col1 - 5 // Space between item and description columns
+      const descriptionWidth = col3 - col2 - 10 // Space between description and quantity columns
+      const quantityWidth = col4 - col3 - 5 // Space between quantity and price columns
+      const priceWidth = col5 - col4 - 5 // Space between price and amount columns
+      const amountWidth = 30 // Fixed width for amount column
+
+      // Split text if needed
+      const itemLines = this.doc.splitTextToSize(itemText, itemWidth)
+      const descriptionLines = this.doc.splitTextToSize(descriptionText, descriptionWidth)
+      const quantityLines = this.doc.splitTextToSize(quantityText, quantityWidth)
+      const priceLines = this.doc.splitTextToSize(priceText, priceWidth)
+      const amountLines = this.doc.splitTextToSize(amountText, amountWidth)
+
+      // Calculate max lines for this row
+      const maxLines = Math.max(
+        itemLines.length,
+        descriptionLines.length,
+        quantityLines.length,
+        priceLines.length,
+        amountLines.length
+      )
+
+      // Draw each line
+      for (let line = 0; line < maxLines; line++) {
+        if (line < itemLines.length) {
+          this.doc.text(itemLines[line], col1, yPos + (line * 4))
+        }
+        if (line < descriptionLines.length) {
+          this.doc.text(descriptionLines[line], col2, yPos + (line * 4))
+        }
+        if (line < quantityLines.length) {
+          this.doc.text(quantityLines[line], col3, yPos + (line * 4), { align: "right" })
+        }
+        if (line < priceLines.length) {
+          this.doc.text(priceLines[line], col4, yPos + (line * 4), { align: "right" })
+        }
+        if (line < amountLines.length) {
+          this.doc.text(amountLines[line], col5, yPos + (line * 4), { align: "right" })
+        }
+      }
+
+      yPos += (maxLines * 4) + 4
     })
-
-    // Draw table border
-    this.doc.setDrawColor(200, 200, 200)
-    this.doc.rect(this.margin, 175, this.pageWidth - 2 * this.margin, yPos - 175)
   }
 
-  private addTotals(invoiceData: InvoiceData) {
-    let yPos = Math.max(220, 180 + invoiceData.lineItems.length * 15 + 30)
-
-    const totalsX = this.pageWidth - 80
-
-    this.doc.setFontSize(12)
-    this.doc.setFont("helvetica", "normal")
-
-    // Subtotal
-    this.doc.text("Subtotal:", totalsX - 30, yPos)
-    this.doc.text(`$${invoiceData.subtotal.toFixed(2)}`, this.pageWidth - this.margin, yPos, { align: "right" })
-
-    yPos += 15
-
-    // Tax
-    if (invoiceData.tax > 0) {
-      this.doc.text("Tax:", totalsX - 30, yPos)
-      this.doc.text(`$${invoiceData.tax.toFixed(2)}`, this.pageWidth - this.margin, yPos, { align: "right" })
-      yPos += 15
-    }
-
-    // Total
-    this.doc.setFont("helvetica", "bold")
-    this.doc.setFontSize(14)
-    this.doc.text("Total:", totalsX - 30, yPos)
-    this.doc.text(`$${invoiceData.total.toFixed(2)}`, this.pageWidth - this.margin, yPos, { align: "right" })
-
-    // Draw line above total
-    this.doc.setDrawColor(0, 0, 0)
-    this.doc.line(totalsX - 35, yPos - 5, this.pageWidth - this.margin, yPos - 5)
-  }
-
-  private addNotes(invoiceData: InvoiceData) {
-    if (!invoiceData.notes) return
-
-    let yPos = Math.max(280, 240 + invoiceData.lineItems.length * 15)
-
-    this.doc.setFontSize(12)
-    this.doc.setFont("helvetica", "bold")
-    this.doc.text("Notes:", this.margin, yPos)
-
-    yPos += 10
-    this.doc.setFont("helvetica", "normal")
-
-    // Split notes into lines to fit page width
-    const lines = this.doc.splitTextToSize(invoiceData.notes, this.pageWidth - 2 * this.margin)
-    this.doc.text(lines, this.margin, yPos)
-  }
-
-  private addFooter() {
-    const footerY = this.pageHeight - 20
-
+  private addNotesAndTotals(invoiceData: InvoiceData) {
+    // Calculate position based on line items
+    let yPos = this.pageHeight - 30
+    
+    // Total section (right side, teal background) - thinner
+    const totalWidth = (this.margin * 2) + (`$${invoiceData.total.toFixed(2)}`.length * 4)
+    const totalX = this.pageWidth - totalWidth
+    const notesHeight = 30
+    
+    // Draw background for total - extend to margins
+    this.doc.setFillColor(21, 93, 252)
+    this.doc.rect(totalX, yPos, totalWidth, notesHeight, "F")
+    
+    // Total text
     this.doc.setFontSize(10)
+    this.doc.setFont("helvetica", "bold")
+    this.doc.setTextColor(255, 255, 255) // White
+    this.doc.text("TOTAL (USD):", totalX + totalWidth - (this.margin), yPos + 8, { align: "right" })
+    
+    // Total amount
+    this.doc.setFontSize(24)
+    this.doc.setFont("helvetica", "bold")
+    this.doc.text(`$${invoiceData.total.toFixed(2)}`, totalX + totalWidth - (this.margin), yPos + this.margin + 3, { align: "right" })
+    
+    // Draw light blue background for notes - extend to margins
+    this.doc.setFillColor(190, 219, 255)
+    this.doc.rect(0, yPos, totalX, notesHeight, "F")
+    
+    // Notes header
+    this.doc.setFontSize(10)
+    this.doc.setFont("helvetica", "bold")
+    this.doc.setTextColor(0, 0, 0)
+    this.doc.text("NOTES:", this.margin, yPos + 8)
+    
+    // Notes content
+    if (invoiceData.notes) {
     this.doc.setFont("helvetica", "normal")
-    this.doc.setTextColor(128, 128, 128)
-    this.doc.text("Thank you for your business!", this.pageWidth / 2, footerY, { align: "center" })
+    this.doc.setFontSize(10)
+      const lines = this.doc.splitTextToSize(invoiceData.notes, totalX - this.margin * 1.5)
+      this.doc.text(lines, this.margin, yPos + 13)
+    }
   }
 }

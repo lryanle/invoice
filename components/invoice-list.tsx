@@ -4,11 +4,12 @@ import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { EditInvoiceDialog } from "@/components/edit-invoice-dialog"
 import { DeleteInvoiceDialog } from "@/components/delete-invoice-dialog"
 import { useToast } from "@/hooks/use-toast"
 import { FileText, Loader2, Calendar, DollarSign, Download, Edit, Trash2 } from "lucide-react"
-import { SkeletonCard } from "@/components/skeleton-card" // Import SkeletonCard component
+import { SkeletonCard } from "@/components/ui/skeleton"
+import Link from "next/link"
+import { formatCompanyNameForFilename } from "@/lib/utils"
 
 interface Invoice {
   _id: string
@@ -16,8 +17,9 @@ interface Invoice {
   companyId: string
   date: string
   dueDate: string
+  customerRef?: string
   total: number
-  status: "draft" | "sent" | "paid" | "overdue"
+  status: "draft" | "complete"
   createdAt: string
 }
 
@@ -61,7 +63,12 @@ export function InvoiceList() {
         const url = window.URL.createObjectURL(blob)
         const a = document.createElement("a")
         a.href = url
-        a.download = `invoice-${invoiceNumber}.pdf`
+        
+        // Get filename from response headers
+        const contentDisposition = response.headers.get('content-disposition')
+        const filename = contentDisposition?.match(/filename="(.+)"/)?.[1] || `invoice-${invoiceNumber}.pdf`
+        a.download = filename
+        
         document.body.appendChild(a)
         a.click()
         window.URL.revokeObjectURL(url)
@@ -102,12 +109,8 @@ export function InvoiceList() {
     switch (status) {
       case "draft":
         return "secondary"
-      case "sent":
+      case "complete":
         return "default"
-      case "paid":
-        return "default"
-      case "overdue":
-        return "destructive"
       default:
         return "secondary"
     }
@@ -164,6 +167,12 @@ export function InvoiceList() {
               <DollarSign className="h-4 w-4" />
               <span>Created: {new Date(invoice.createdAt).toLocaleDateString()}</span>
             </div>
+            {invoice.customerRef && (
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <FileText className="h-4 w-4" />
+                <span>Ref: {invoice.customerRef}</span>
+              </div>
+            )}
 
             <div className="flex gap-2 pt-2">
               <Button
@@ -180,11 +189,11 @@ export function InvoiceList() {
                 )}
               </Button>
 
-              <EditInvoiceDialog invoice={invoice} onInvoiceUpdated={handleInvoiceUpdated}>
-                <Button variant="outline" size="sm">
+              <Link href={`/invoices/manage/${invoice._id}`}>
+                <Button variant="ghost" size="sm">
                   <Edit className="h-4 w-4" />
                 </Button>
-              </EditInvoiceDialog>
+              </Link>
 
               <DeleteInvoiceDialog invoice={invoice} onInvoiceDeleted={handleInvoiceDeleted}>
                 <Button variant="outline" size="sm" className="text-destructive hover:text-destructive bg-transparent">

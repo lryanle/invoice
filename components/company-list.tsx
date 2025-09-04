@@ -7,8 +7,8 @@ import { Badge } from "@/components/ui/badge"
 import { EditCompanyDialog } from "@/components/edit-company-dialog"
 import { DeleteCompanyDialog } from "@/components/delete-company-dialog"
 import { useToast } from "@/hooks/use-toast"
-import { Building2, Mail, MapPin, Edit, Trash2 } from "lucide-react"
-import { SkeletonCard } from "@/components/skeleton-card" // Import SkeletonCard component
+import { Building, Building2, Mail, MapPin, Edit, Trash2 } from "lucide-react"
+import { SkeletonCard } from "@/components/ui/skeleton"
 
 interface Company {
   _id: string
@@ -97,7 +97,7 @@ export function CompanyList() {
             <div className="flex items-start justify-between">
               <div className="space-y-1">
                 <CardTitle className="text-lg flex items-center gap-2">
-                  <Building2 className="h-5 w-5 text-primary" />
+                  <Building className="h-5 w-5 text-primary" />
                   {company.name}
                 </CardTitle>
                 <Badge variant="secondary" className="text-xs">

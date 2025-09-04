@@ -172,7 +172,7 @@ export function UserSettingsForm() {
 
         <div className="grid gap-4 md:grid-cols-2">
           <div className="space-y-2">
-            <Label htmlFor="fullName">Full Name *</Label>
+            <Label htmlFor="fullName">Full Name <span className="text-red-500">*</span></Label>
             <Input
               id="fullName"
               value={profile.fullName}
@@ -183,7 +183,7 @@ export function UserSettingsForm() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="email">Email Address *</Label>
+            <Label htmlFor="email">Email Address <span className="text-red-500">*</span></Label>
             <div className="relative">
               <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
               <Input
@@ -247,7 +247,7 @@ export function UserSettingsForm() {
 
         <div className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="street1">Street Address 1 *</Label>
+            <Label htmlFor="street1">Street Address 1 <span className="text-red-500">*</span></Label>
             <Input
               id="street1"
               value={profile.address.street1}
@@ -269,7 +269,7 @@ export function UserSettingsForm() {
 
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="city">City *</Label>
+              <Label htmlFor="city">City <span className="text-red-500">*</span></Label>
               <Input
                 id="city"
                 value={profile.address.city}
@@ -280,7 +280,7 @@ export function UserSettingsForm() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="state">State/Province *</Label>
+              <Label htmlFor="state">State/Province <span className="text-red-500">*</span></Label>
               <Input
                 id="state"
                 value={profile.address.state}
@@ -293,7 +293,7 @@ export function UserSettingsForm() {
 
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="country">Country *</Label>
+              <Label htmlFor="country">Country <span className="text-red-500">*</span></Label>
               <Input
                 id="country"
                 value={profile.address.country}
@@ -304,7 +304,7 @@ export function UserSettingsForm() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="zip">ZIP/Postal Code *</Label>
+              <Label htmlFor="zip">ZIP/Postal Code <span className="text-red-500">*</span></Label>
               <Input
                 id="zip"
                 value={profile.address.zip}

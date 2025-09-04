@@ -27,21 +27,22 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { companyId, date, dueDate, lineItems, tax, notes, status = "draft" } = body
+    const { companyId, date, dueDate, customerRef, invoiceNumber, lineItems, tax, notes, status = "draft" } = body
 
     // Calculate totals
     const subtotal = lineItems.reduce((sum: number, item: any) => sum + item.total, 0)
     const total = subtotal + (tax || 0)
 
-    // Generate invoice number
-    const invoiceNumber = await DatabaseService.generateInvoiceNumber(userId)
+    // Use provided invoice number or generate next number for company
+    const finalInvoiceNumber = invoiceNumber || await DatabaseService.generateInvoiceNumber(userId, companyId)
 
     const invoiceId = await DatabaseService.createInvoice({
       userId,
       companyId,
-      invoiceNumber,
+      invoiceNumber: finalInvoiceNumber,
       date: new Date(date),
       dueDate: new Date(dueDate),
+      customerRef,
       lineItems,
       subtotal,
       tax,
