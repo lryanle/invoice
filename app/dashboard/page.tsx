@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { FileText, Building2, DollarSign, TrendingUp, Plus } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
+import { FileText, Building2, DollarSign, TrendingUp, Plus, BarChart3, Eye, Edit, User, Notebook } from "lucide-react"
 import Link from "next/link"
 import { Skeleton } from "@/components/ui/skeleton"
 
@@ -17,13 +18,21 @@ interface DashboardStats {
 interface RecentInvoice {
   _id: string
   invoiceNumber: string
-  companyName: string
+  companyId: string
   total: number
-  status: string
+  status: "draft" | "complete"
   date: string
+  dueDate: string
+  customerRef?: string
+}
+
+interface Company {
+  _id: string;
+  name: string;
 }
 
 export default function DashboardPage() {
+  const [companies, setCompanies] = useState<Company[]>([]);
   const [stats, setStats] = useState<DashboardStats | null>(null)
   const [recentInvoices, setRecentInvoices] = useState<RecentInvoice[]>([])
   const [loading, setLoading] = useState(true)
@@ -47,6 +56,13 @@ export default function DashboardPage() {
         const invoicesData = await invoicesResponse.json()
         setRecentInvoices(invoicesData)
       }
+
+      // Fetch companies
+      const companiesResponse = await fetch("/api/companies");
+      if (companiesResponse.ok) {
+        const companiesData = await companiesResponse.json();
+        setCompanies(companiesData);
+      }
     } catch (error) {
       console.error("Error fetching dashboard data:", error)
     } finally {
@@ -60,6 +76,22 @@ export default function DashboardPage() {
       currency: "USD",
     }).format(amount)
   }
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "complete":
+        return "default"
+      case "draft":
+        return "secondary"
+      default:
+        return "outline"
+    }
+  }
+
+  const getCompanyName = (companyId: string) => {
+    const company = companies.find(c => c._id === companyId);
+    return company?.name || "Unknown Company";
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -136,21 +168,31 @@ export default function DashboardPage() {
 
           {/* Quick Actions */}
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {/* Manage Invoices */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Plus className="h-5 w-5 text-primary" />
-                  Create Invoice
+                  <FileText className="h-5 w-5 text-primary" />
+                  Manage Invoices
                 </CardTitle>
-                <CardDescription>Generate a new invoice for your clients</CardDescription>
+                <CardDescription>View and create invoices for your clients</CardDescription>
               </CardHeader>
-              <CardContent>
-                <Link href="/invoices">
-                  <Button className="w-full">Go to Invoices</Button>
+              <CardContent className="w-full space-y-3 grid grid-cols-5 gap-4">
+                <Link href="/invoices" className="col-span-4">
+                  <Button variant="outline" className="w-full">
+                    <Eye className="mr-2 h-4 w-4" />
+                    View Invoices
+                  </Button>
+                </Link>
+                <Link href="/invoices/new" className="col-span-1">
+                  <Button className="w-full">
+                    <Plus className="h-4 w-4" />
+                  </Button>
                 </Link>
               </CardContent>
             </Card>
 
+            {/* Manage Companies */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -159,27 +201,41 @@ export default function DashboardPage() {
                 </CardTitle>
                 <CardDescription>Add and manage companies you invoice</CardDescription>
               </CardHeader>
-              <CardContent>
-                <Link href="/companies">
-                  <Button className="w-full">
+              <CardContent className="w-full space-y-3 grid grid-cols-5 gap-4">
+                <Link href="/companies" className="col-span-4">
+                  <Button variant="outline" className="w-full">
+                    <Eye className="mr-2 h-4 w-4" />
                     View Companies
+                  </Button>
+                </Link>
+                <Link href="/companies" className="col-span-1">
+                  <Button className="w-full">
+                    <Plus className="h-4 w-4" />
                   </Button>
                 </Link>
               </CardContent>
             </Card>
 
+            {/* View Analytics */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <FileText className="h-5 w-5 text-primary" />
-                  View All Invoices
+                  <BarChart3 className="h-5 w-5 text-primary" />
+                  View Analytics
                 </CardTitle>
-                <CardDescription>Browse and manage all your invoices</CardDescription>
+                <CardDescription>Insights into your invoicing performance</CardDescription>
               </CardHeader>
-              <CardContent>
-                <Link href="/invoices">
-                  <Button className="w-full">
-                    View Invoices
+              <CardContent className="w-full space-y-3 grid grid-cols-2 gap-4">
+                <Link href="/analytics" className="col-span-1">
+                  <Button className="w-full" variant="outline">
+                    <User className="mr-2 h-4 w-4" />
+                    Personal Stats
+                  </Button>
+                </Link>
+                <Link href="/analytics" className="col-span-1">
+                  <Button className="w-full" variant="outline">
+                    <Building2 className="mr-2 h-4 w-4" />
+                    Company Stats
                   </Button>
                 </Link>
               </CardContent>
@@ -217,16 +273,41 @@ export default function DashboardPage() {
                   return (
                     <div className="space-y-4">
                       {recentInvoices.map((invoice) => (
-                        <div key={invoice._id} className="flex items-center justify-between p-4 border rounded-lg">
-                          <div className="space-y-1">
-                            <div className="font-medium">{invoice.invoiceNumber}</div>
-                            <div className="text-sm text-muted-foreground">{invoice.companyName}</div>
-                          </div>
-                          <div className="text-right space-y-1">
-                            <div className="font-medium">{formatCurrency(invoice.total)}</div>
-                            <div className="text-sm text-muted-foreground">
-                              {new Date(invoice.date).toLocaleDateString()}
+                        <div key={invoice._id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors">
+                          <div className="flex items-center gap-4 flex-1">
+                            <div className="flex items-center gap-2">
+                              <Building2 className="h-4 w-4 text-primary" />
+                              <span className="font-medium">{getCompanyName(invoice.companyId)}</span>
                             </div>
+                            <div className="flex items-center gap-2 text-muted-foreground">
+                              <FileText className="h-4 w-4" />
+                              {`Invoice #${invoice.invoiceNumber}`}
+                            </div>
+                            <div className="flex items-center gap-2 text-muted-foreground">
+                            <Notebook className="h-4 w-4" />
+                              {invoice.customerRef || ""}
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-4">
+                            <div className="text-right">
+                              <div className="text-sm text-muted-foreground">
+                                {new Date(invoice.date).toLocaleDateString()}
+                              </div>
+                              <div className="text-sm text-muted-foreground">
+                                Due: {new Date(invoice.dueDate).toLocaleDateString()}
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <div className="font-medium">{formatCurrency(invoice.total)}</div>
+                              <Badge variant={getStatusColor(invoice.status)} className="text-xs">
+                                {invoice.status.toUpperCase()}
+                              </Badge>
+                            </div>
+                            <Link href={`/invoices/manage/${invoice._id}`}>
+                              <Button variant="ghost" size="sm">
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                            </Link>
                           </div>
                         </div>
                       ))}

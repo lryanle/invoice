@@ -34,7 +34,6 @@ import {
   Loader2,
 } from "lucide-react";
 import Link from "next/link";
-import { formatCompanyNameForFilename } from "@/lib/utils";
 
 interface Invoice {
   _id: string;

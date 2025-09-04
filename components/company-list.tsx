@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, forwardRef, useImperativeHandle } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -25,7 +25,11 @@ interface Company {
   createdAt: string
 }
 
-export function CompanyList() {
+export interface CompanyListRef {
+  refreshCompanies: () => void
+}
+
+export const CompanyList = forwardRef<CompanyListRef>((props, ref) => {
   const [companies, setCompanies] = useState<Company[]>([])
   const [loading, setLoading] = useState(true)
   const { toast } = useToast()
@@ -55,6 +59,10 @@ export function CompanyList() {
     }
   }
 
+  useImperativeHandle(ref, () => ({
+    refreshCompanies: fetchCompanies
+  }))
+
   const handleCompanyUpdated = () => {
     fetchCompanies()
   }
@@ -70,8 +78,8 @@ export function CompanyList() {
   if (loading) {
     return (
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {Array.from({ length: 6 }).map((_, i) => (
-          <SkeletonCard key={i} />
+        {Array.from({ length: 6 }, (_, i) => (
+          <SkeletonCard key={`company-skeleton-${i}`} />
         ))}
       </div>
     )
@@ -139,4 +147,4 @@ export function CompanyList() {
       ))}
     </div>
   )
-}
+})
