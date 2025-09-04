@@ -1,8 +1,7 @@
-import { SignedIn, SignedOut, SignInButton } from "@clerk/nextjs"
+import { SignedOut, SignInButton } from "@clerk/nextjs"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { FileText, Users, Building2, DollarSign, Download } from "lucide-react"
-import Link from "next/link"
+import { FileText, Building2, DollarSign, Download } from "lucide-react"
 
 export default function HomePage() {
   return (
@@ -42,35 +41,6 @@ export default function HomePage() {
           </Card>
         </div>
       </SignedOut>
-
-      <SignedIn>
-        <div className="flex min-h-screen items-center justify-center p-4">
-          <Card className="w-full max-w-2xl">
-            <CardHeader className="text-center">
-              <CardTitle className="text-3xl font-bold text-primary">invoice.lryanle.com</CardTitle>
-              <CardDescription className="text-lg">
-                Get started by setting up your profile and creating your first client
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="grid gap-4 md:grid-cols-2">
-                <Link href="/dashboard">
-                  <Button className="w-full h-20 text-lg" variant="default">
-                    <FileText className="mr-2 h-6 w-6" />
-                    Go to Dashboard
-                  </Button>
-                </Link>
-                <Link href="/settings">
-                  <Button className="w-full h-20 text-lg bg-transparent" variant="outline">
-                    <Users className="mr-2 h-6 w-6" />
-                    Setup Profile
-                  </Button>
-                </Link>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </SignedIn>
     </div>
   )
 }

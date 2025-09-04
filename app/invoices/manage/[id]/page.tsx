@@ -1,5 +1,6 @@
 import { InvoiceForm } from "@/components/invoice-form"
 import { Navbar } from "@/components/navbar"
+import { validateProfileForInvoices } from "@/lib/profile-validation"
 
 interface PageProps {
   params: Promise<{ id: string }>
@@ -7,6 +8,9 @@ interface PageProps {
 
 export default async function ManageInvoicePage({ params }: PageProps) {
   const { id } = await params
+  
+  await validateProfileForInvoices()
+  
   return (
     <div className="min-h-screen bg-background">
       <Navbar />

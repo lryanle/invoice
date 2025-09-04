@@ -24,6 +24,29 @@ export async function validateProfileSetup() {
   }
 }
 
+export async function validateProfileForInvoices() {
+  const { userId } = await auth()
+  
+  if (!userId) {
+    redirect("/")
+  }
+
+  try {
+    const profile = await DatabaseService.getUserProfile(userId)
+    const profileComplete = profile && profile.fullName && profile.address?.street1
+    
+    if (!profileComplete) {
+      // Redirect to settings with a flag to show toast
+      redirect("/settings?incomplete=true")
+    }
+    
+    return profile
+  } catch (error) {
+    console.error("Error validating profile:", error)
+    redirect("/settings?incomplete=true")
+  }
+}
+
 export async function getProfileOrRedirect() {
   const { userId } = await auth()
   

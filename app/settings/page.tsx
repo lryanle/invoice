@@ -1,8 +1,16 @@
 import { UserSettingsForm } from "@/components/user-settings-form"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Navbar } from "@/components/navbar"
+import { SettingsPageClient } from "./settings-page-client"
 
-export default function SettingsPage() {
+interface SettingsPageProps {
+  readonly searchParams: Promise<{ [key: string]: string | string[] | undefined }>
+}
+
+export default async function SettingsPage({ searchParams }: SettingsPageProps) {
+  const params = await searchParams
+  const showIncompleteToast = params.incomplete === "true"
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
@@ -25,6 +33,8 @@ export default function SettingsPage() {
           </Card>
         </div>
       </main>
+      
+      <SettingsPageClient showIncompleteToast={showIncompleteToast} />
     </div>
   )
 }

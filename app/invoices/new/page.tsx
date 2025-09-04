@@ -1,7 +1,10 @@
 import { InvoiceForm } from "@/components/invoice-form"
 import { Navbar } from "@/components/navbar"
+import { validateProfileForInvoices } from "@/lib/profile-validation"
 
-export default function NewInvoicePage() {
+export default async function NewInvoicePage() {
+  await validateProfileForInvoices()
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
