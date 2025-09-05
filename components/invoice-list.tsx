@@ -9,12 +9,12 @@ import { useToast } from "@/hooks/use-toast"
 import { FileText, Loader2, Calendar, DollarSign, Download, Edit, Trash2 } from "lucide-react"
 import { SkeletonCard } from "@/components/ui/skeleton"
 import Link from "next/link"
-import { formatCompanyNameForFilename } from "@/lib/utils"
+import { formatClientNameForFilename } from "@/lib/utils"
 
 interface Invoice {
   _id: string
   invoiceNumber: string
-  companyId: string
+  clientId: string
   date: string
   dueDate: string
   customerRef?: string

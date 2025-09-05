@@ -19,7 +19,7 @@ export function Navbar() {
   const navItems = [
     { href: "/dashboard", label: "Dashboard", icon: BarChart3 },
     { href: "/invoices", label: "Invoices", icon: FileText },
-    { href: "/companies", label: "Companies", icon: Building2 },
+    { href: "/clients", label: "Clients", icon: Building2 },
     { href: "/analytics", label: "Analytics", icon: TrendingUp },
     { href: "/settings", label: "Settings", icon: Settings },
   ]

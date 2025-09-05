@@ -11,13 +11,13 @@ export async function GET(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url)
-    const companyId = searchParams.get("companyId")
+    const clientId = searchParams.get("clientId")
 
-    if (!companyId) {
-      return NextResponse.json({ error: "Company ID is required" }, { status: 400 })
+    if (!clientId) {
+      return NextResponse.json({ error: "Client ID is required" }, { status: 400 })
     }
 
-    const invoiceNumber = await DatabaseService.generateInvoiceNumber(userId, companyId)
+    const invoiceNumber = await DatabaseService.generateInvoiceNumber(userId, clientId)
     return NextResponse.json({ invoiceNumber })
   } catch (error) {
     console.error("Error generating invoice number:", error)

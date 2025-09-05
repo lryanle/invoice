@@ -1,5 +1,5 @@
 import { getDatabase } from "./mongodb"
-import type { UserProfile, Company, Invoice } from "./models/user"
+import type { UserProfile, Client, Invoice } from "./models/user"
 import { ObjectId, type Db } from "mongodb"
 
 export async function connectToDatabase() {
@@ -42,13 +42,13 @@ export class DatabaseService {
       .updateOne({ clerkUserId }, { $set: { ...updates, updatedAt: now } })
   }
 
-  // Company Operations
-  static async createCompany(company: Omit<Company, "_id" | "createdAt" | "updatedAt">) {
+  // Client Operations
+  static async createClient(client: Omit<Client, "_id" | "createdAt" | "updatedAt">) {
     const db = await this.getDb()
     const now = new Date()
 
-    const result = await db.collection<Company>("companies").insertOne({
-      ...company,
+    const result = await db.collection<Client>("clients").insertOne({
+      ...client,
       createdAt: now,
       updatedAt: now,
     })
@@ -56,28 +56,28 @@ export class DatabaseService {
     return result.insertedId
   }
 
-  static async getCompaniesByUser(userId: string) {
+  static async getClientsByUser(userId: string) {
     const db = await this.getDb()
-    return await db.collection<Company>("companies").find({ userId }).sort({ name: 1 }).toArray()
+    return await db.collection<Client>("clients").find({ userId }).sort({ name: 1 }).toArray()
   }
 
-  static async getCompanyById(id: string) {
+  static async getClientById(id: string) {
     const db = await this.getDb()
-    return await db.collection<Company>("companies").findOne({ _id: new ObjectId(id) })
+    return await db.collection<Client>("clients").findOne({ _id: new ObjectId(id) })
   }
 
-  static async updateCompany(id: string, updates: Partial<Company>) {
+  static async updateClient(id: string, updates: Partial<Client>) {
     const db = await this.getDb()
     const now = new Date()
 
     return await db
-      .collection<Company>("companies")
+      .collection<Client>("clients")
       .updateOne({ _id: new ObjectId(id) }, { $set: { ...updates, updatedAt: now } })
   }
 
-  static async deleteCompany(id: string) {
+  static async deleteClient(id: string) {
     const db = await this.getDb()
-    return await db.collection<Company>("companies").deleteOne({ _id: new ObjectId(id) })
+    return await db.collection<Client>("clients").deleteOne({ _id: new ObjectId(id) })
   }
 
   // Invoice Operations
@@ -99,9 +99,9 @@ export class DatabaseService {
     return await db.collection<Invoice>("invoices").find({ userId }).sort({ createdAt: -1 }).toArray()
   }
 
-  static async getInvoicesByCompany(companyId: string) {
+  static async getInvoicesByClient(clientId: string) {
     const db = await this.getDb()
-    return await db.collection<Invoice>("invoices").find({ companyId }).sort({ createdAt: -1 }).toArray()
+    return await db.collection<Invoice>("invoices").find({ clientId }).sort({ createdAt: -1 }).toArray()
   }
 
   static async getInvoiceById(id: string) {
@@ -163,11 +163,11 @@ export class DatabaseService {
     return result.length > 0 ? result[0].cost : null
   }
 
-  // Generate next invoice number for a specific company
-  static async generateInvoiceNumber(userId: string, companyId: string) {
+  // Generate next invoice number for a specific client
+  static async generateInvoiceNumber(userId: string, clientId: string) {
     const db = await this.getDb()
     const lastInvoice = await db.collection<Invoice>("invoices").findOne(
-      { userId, companyId }, 
+      { userId, clientId }, 
       { sort: { createdAt: -1 } }
     )
 
@@ -186,25 +186,25 @@ export class DatabaseService {
   }
 
   // Analytics methods
-  static async getCompanyAnalytics(userId: string, companyId?: string) {
+  static async getClientAnalytics(userId: string, clientId?: string) {
     const db = await this.getDb()
     
-    if (companyId) {
-      // Get analytics for specific company
-      const company = await db.collection("companies").findOne({ _id: new ObjectId(companyId), userId })
-      if (!company) return null
+    if (clientId) {
+      // Get analytics for specific client
+      const client = await db.collection("clients").findOne({ _id: new ObjectId(clientId), userId })
+      if (!client) return null
 
-      const invoices = await db.collection<Invoice>("invoices").find({ companyId, userId }).toArray()
+      const invoices = await db.collection<Invoice>("invoices").find({ clientId, userId }).toArray()
       
       const totalInvoices = invoices.length
       const totalRevenue = invoices.reduce((sum: number, inv: Invoice) => sum + inv.total, 0)
       const averageInvoice = totalInvoices > 0 ? totalRevenue / totalInvoices : 0
 
-      // Line item breakdown for this company
+      // Line item breakdown for this client
       const lineItemBreakdown = await db
         .collection("invoices")
         .aggregate([
-          { $match: { companyId, userId } },
+          { $match: { clientId, userId } },
           { $unwind: "$lineItems" },
           {
             $group: {
@@ -218,11 +218,11 @@ export class DatabaseService {
         ])
         .toArray()
 
-      // Monthly revenue for this company
+      // Monthly revenue for this client
       const monthlyRevenue = await db
         .collection("invoices")
         .aggregate([
-          { $match: { companyId, userId } },
+          { $match: { clientId, userId } },
           {
             $group: {
               _id: {
@@ -238,7 +238,7 @@ export class DatabaseService {
         .toArray()
 
       return {
-        company,
+        client,
         stats: { totalInvoices, totalRevenue, averageInvoice },
         lineItemBreakdown,
         monthlyRevenue: monthlyRevenue.map((item: any) => ({
@@ -248,24 +248,24 @@ export class DatabaseService {
         })),
       }
     } else {
-      // Get analytics for all companies
+      // Get analytics for all clients
       return await db
         .collection("invoices")
         .aggregate([
           { $match: { userId } },
           {
             $lookup: {
-              from: "companies",
-              localField: "companyId",
+              from: "clients",
+              localField: "clientId",
               foreignField: "_id",
-              as: "company",
+              as: "client",
             },
           },
-          { $unwind: "$company" },
+          { $unwind: "$client" },
           {
             $group: {
-              _id: "$companyId",
-              companyName: { $first: "$company.name" },
+              _id: "$clientId",
+              clientName: { $first: "$client.name" },
               totalInvoices: { $sum: 1 },
               totalRevenue: { $sum: "$total" },
               averageInvoice: { $avg: "$total" },
@@ -282,13 +282,13 @@ export class DatabaseService {
     const db = await this.getDb()
 
     // Get basic stats using existing methods
-    const [invoices, companies] = await Promise.all([
+    const [invoices, clients] = await Promise.all([
       this.getInvoicesByUser(userId),
-      this.getCompaniesByUser(userId)
+      this.getClientsByUser(userId)
     ])
 
     const totalInvoices = invoices.length
-    const totalCompanies = companies.length
+    const totalClients = clients.length
     const totalRevenue = invoices.reduce((sum: number, inv: Invoice) => sum + inv.total, 0)
     const averageInvoice = totalInvoices > 0 ? totalRevenue / totalInvoices : 0
     const maxInvoice = totalInvoices > 0 ? Math.max(...invoices.map((inv: Invoice) => inv.total)) : 0
@@ -369,7 +369,7 @@ export class DatabaseService {
     return {
       basicStats: {
         totalInvoices,
-        totalCompanies,
+        totalClients,
         totalRevenue,
         averageInvoice,
         maxInvoice,

@@ -10,7 +10,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 
 interface DashboardStats {
   totalInvoices: number
-  totalCompanies: number
+  totalClients: number
   totalInvoicedAmount: number
   averageInvoiceAmount: number
 }
@@ -18,7 +18,7 @@ interface DashboardStats {
 interface RecentInvoice {
   _id: string
   invoiceNumber: string
-  companyId: string
+  clientId: string
   total: number
   status: "draft" | "complete"
   date: string
@@ -26,13 +26,13 @@ interface RecentInvoice {
   customerRef?: string
 }
 
-interface Company {
+interface Client {
   _id: string;
   name: string;
 }
 
 export default function DashboardPage() {
-  const [companies, setCompanies] = useState<Company[]>([]);
+  const [clients, setClients] = useState<Client[]>([]);
   const [stats, setStats] = useState<DashboardStats | null>(null)
   const [recentInvoices, setRecentInvoices] = useState<RecentInvoice[]>([])
   const [loading, setLoading] = useState(true)
@@ -57,11 +57,11 @@ export default function DashboardPage() {
         setRecentInvoices(invoicesData)
       }
 
-      // Fetch companies
-      const companiesResponse = await fetch("/api/companies");
-      if (companiesResponse.ok) {
-        const companiesData = await companiesResponse.json();
-        setCompanies(companiesData);
+      // Fetch clients
+      const clientsResponse = await fetch("/api/clients");
+      if (clientsResponse.ok) {
+        const clientsData = await clientsResponse.json();
+        setClients(clientsData);
       }
     } catch (error) {
       console.error("Error fetching dashboard data:", error)
@@ -88,9 +88,9 @@ export default function DashboardPage() {
     }
   }
 
-  const getCompanyName = (companyId: string) => {
-    const company = companies.find(c => c._id === companyId);
-    return company?.name || "Unknown Company";
+  const getClientName = (clientId: string) => {
+    const client = clients.find(c => c._id === clientId);
+    return client?.name || "Unknown Client";
   };
 
   return (
@@ -122,15 +122,15 @@ export default function DashboardPage() {
 
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Companies</CardTitle>
+                <CardTitle className="text-sm font-medium">Total Clients</CardTitle>
                 <Building2 className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
-                  {loading ? <Skeleton className="h-8 w-16" /> : stats?.totalCompanies || 0}
+                  {loading ? <Skeleton className="h-8 w-16" /> : stats?.totalClients || 0}
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  {stats?.totalCompanies === 0 ? "No companies added" : "Active clients"}
+                  {stats?.totalClients === 0 ? "No clients added" : "Active clients"}
                 </p>
               </CardContent>
             </Card>
@@ -192,23 +192,23 @@ export default function DashboardPage() {
               </CardContent>
             </Card>
 
-            {/* Manage Companies */}
+            {/* Manage Clients */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Building2 className="h-5 w-5 text-primary" />
-                  Manage Companies
+                  Manage Clients
                 </CardTitle>
-                <CardDescription>Add and manage companies you invoice</CardDescription>
+                <CardDescription>Add and manage clients you invoice</CardDescription>
               </CardHeader>
               <CardContent className="w-full space-y-3 grid grid-cols-5 gap-4">
-                <Link href="/companies" className="col-span-4">
+                <Link href="/clients" className="col-span-4">
                   <Button variant="outline" className="w-full">
                     <Eye className="mr-2 h-4 w-4" />
-                    View Companies
+                    View Clients
                   </Button>
                 </Link>
-                <Link href="/companies" className="col-span-1">
+                <Link href="/clients" className="col-span-1">
                   <Button className="w-full">
                     <Plus className="h-4 w-4" />
                   </Button>
@@ -235,7 +235,7 @@ export default function DashboardPage() {
                 <Link href="/analytics" className="col-span-1">
                   <Button className="w-full" variant="outline">
                     <Building2 className="mr-2 h-4 w-4" />
-                    Company Stats
+                    Client Stats
                   </Button>
                 </Link>
               </CardContent>
@@ -277,7 +277,7 @@ export default function DashboardPage() {
                           <div className="flex items-center gap-4 flex-1">
                             <div className="flex items-center gap-2">
                               <Building2 className="h-4 w-4 text-primary" />
-                              <span className="font-medium">{getCompanyName(invoice.companyId)}</span>
+                              <span className="font-medium">{getClientName(invoice.clientId)}</span>
                             </div>
                             <div className="flex items-center gap-2 text-muted-foreground">
                               <FileText className="h-4 w-4" />

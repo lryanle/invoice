@@ -19,7 +19,7 @@ import { Separator } from "@/components/ui/separator"
 import { useToast } from "@/hooks/use-toast"
 import { Loader2, Building, Mail, MapPin } from "lucide-react"
 
-interface Company {
+interface Client {
   _id: string
   name: string
   email: string
@@ -33,26 +33,26 @@ interface Company {
   }
 }
 
-interface EditCompanyDialogProps {
+interface EditClientDialogProps {
   children: React.ReactNode
-  company: Company
-  onCompanyUpdated?: () => void
+  client: Client
+  onClientUpdated?: () => void
 }
 
-export function EditCompanyDialog({ children, company, onCompanyUpdated }: EditCompanyDialogProps) {
+export function EditClientDialog({ children, client, onClientUpdated }: EditClientDialogProps) {
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const { toast } = useToast()
   const [formData, setFormData] = useState({
-    name: company.name,
-    email: company.email,
+    name: client.name,
+    email: client.email,
     address: {
-      street1: company.address.street1,
-      street2: company.address.street2 || "",
-      city: company.address.city,
-      state: company.address.state,
-      country: company.address.country,
-      zip: company.address.zip,
+      street1: client.address.street1,
+      street2: client.address.street2 || "",
+      city: client.address.city,
+      state: client.address.state,
+      country: client.address.country,
+      zip: client.address.zip,
     },
   })
 
@@ -79,7 +79,7 @@ export function EditCompanyDialog({ children, company, onCompanyUpdated }: EditC
     setLoading(true)
 
     try {
-      const response = await fetch(`/api/companies/${company._id}`, {
+      const response = await fetch(`/api/clients/${client._id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -89,19 +89,19 @@ export function EditCompanyDialog({ children, company, onCompanyUpdated }: EditC
 
       if (response.ok) {
         toast({
-          title: "Company updated",
-          description: "The company has been successfully updated.",
+          title: "Client updated",
+          description: "The client has been successfully updated.",
         })
         setOpen(false)
-        onCompanyUpdated?.()
+        onClientUpdated?.()
       } else {
-        throw new Error("Failed to update company")
+        throw new Error("Failed to update client")
       }
     } catch (error) {
-      console.error("Error updating company:", error)
+      console.error("Error updating client:", error)
       toast({
         title: "Error",
-        description: "Failed to update company. Please try again.",
+        description: "Failed to update client. Please try again.",
         variant: "destructive",
       })
     } finally {
@@ -116,27 +116,27 @@ export function EditCompanyDialog({ children, company, onCompanyUpdated }: EditC
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Building className="h-5 w-5 text-primary" />
-            Edit Company
+            Edit Client
           </DialogTitle>
-          <DialogDescription>Update the company information</DialogDescription>
+          <DialogDescription>Update the client information</DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Company Information */}
+          {/* Client Information */}
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="edit-name">Company Name <span className="text-red-500">*</span></Label>
+              <Label htmlFor="edit-name">Client Name <span className="text-red-500">*</span></Label>
               <Input
                 id="edit-name"
                 value={formData.name}
                 onChange={(e) => updateFormData("name", e.target.value)}
-                placeholder="Enter company name"
+                placeholder="Enter client name"
                 required
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="edit-email">Email Address <span className="text-red-500">*</span></Label>
+              <Label htmlFor="edit-email">Client Email <span className="text-red-500">*</span></Label>
               <div className="relative">
                 <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                 <Input
@@ -144,7 +144,7 @@ export function EditCompanyDialog({ children, company, onCompanyUpdated }: EditC
                   type="email"
                   value={formData.email}
                   onChange={(e) => updateFormData("email", e.target.value)}
-                  placeholder="Enter company email"
+                  placeholder="Enter client email"
                   className="pl-10"
                   required
                 />
@@ -158,7 +158,7 @@ export function EditCompanyDialog({ children, company, onCompanyUpdated }: EditC
           <div className="space-y-4">
             <div className="flex items-center gap-2">
               <MapPin className="h-4 w-4 text-primary" />
-              <Label className="text-sm font-medium">Company Address</Label>
+                              <Label className="text-sm font-medium">Client Address</Label>
             </div>
 
             <div className="space-y-4">
@@ -244,7 +244,7 @@ export function EditCompanyDialog({ children, company, onCompanyUpdated }: EditC
                   Updating...
                 </>
               ) : (
-                "Update Company"
+                "Update Client"
               )}
             </Button>
           </DialogFooter>

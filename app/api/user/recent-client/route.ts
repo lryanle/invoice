@@ -10,28 +10,28 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    // Get the most recent invoice to find the last used company
+    // Get the most recent invoice to find the last used client
     const invoices = await DatabaseService.getInvoicesByUser(userId)
     
     if (!invoices || invoices.length === 0) {
-      return NextResponse.json({ companyId: null })
+      return NextResponse.json({ clientId: null })
     }
 
     const lastInvoice = invoices[0] // Already sorted by createdAt desc
-    const company = await DatabaseService.getCompanyById(lastInvoice.companyId)
+    const client = await DatabaseService.getClientById(lastInvoice.clientId)
 
-    if (!company) {
-      return NextResponse.json({ companyId: null })
+    if (!client) {
+      return NextResponse.json({ clientId: null })
     }
 
     return NextResponse.json({ 
-      companyId: company._id.toString(),
-      companyName: company.name 
+      clientId: client._id.toString(),
+      clientName: client.name 
     })
   } catch (error) {
-    console.error("Error fetching recent company:", error)
+    console.error("Error fetching recent client:", error)
     return NextResponse.json(
-      { error: "Failed to fetch recent company" },
+      { error: "Failed to fetch recent client" },
       { status: 500 }
     )
   }

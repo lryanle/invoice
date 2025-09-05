@@ -10,10 +10,10 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const companies = await DatabaseService.getCompaniesByUser(userId)
-    return NextResponse.json(companies)
+    const clients = await DatabaseService.getClientsByUser(userId)
+    return NextResponse.json(clients)
   } catch (error) {
-    console.error("Error fetching companies:", error)
+    console.error("Error fetching clients:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }
@@ -29,17 +29,17 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const { name, email, address } = body
 
-    const companyId = await DatabaseService.createCompany({
+    const clientId = await DatabaseService.createClient({
       userId,
       name,
       email,
       address,
     })
 
-    const company = await DatabaseService.getCompanyById(companyId.toString())
-    return NextResponse.json(company, { status: 201 })
+    const client = await DatabaseService.getClientById(clientId.toString())
+    return NextResponse.json(client, { status: 201 })
   } catch (error) {
-    console.error("Error creating company:", error)
+    console.error("Error creating client:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }

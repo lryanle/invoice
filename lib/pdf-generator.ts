@@ -18,7 +18,7 @@ interface InvoiceData {
       zip: string
     }
   }
-  company: {
+  client: {
     name: string
     email: string
     address: {
@@ -78,7 +78,7 @@ export class PDFGenerator {
     this.doc.setTextColor(255, 255, 255) // White
     this.doc.text("Invoice", this.margin, 20)
 
-    // Company info on the right side of teal header
+    // Client info on the right side of teal header
     const rightX = this.pageWidth - this.margin
     let yPos = 15
     
@@ -119,30 +119,30 @@ export class PDFGenerator {
     this.doc.text("BILL TO:", this.margin, yPos)
 
     yPos += 8
-    // Company name in bold
+    // Client name in bold
     this.doc.setFontSize(12)
     this.doc.setFont("helvetica", "bold")
-    this.doc.text(invoiceData.company.name, this.margin, yPos)
+    this.doc.text(invoiceData.client.name, this.margin, yPos)
 
     this.doc.setFontSize(10)
     yPos += 6
     this.doc.setFont("helvetica", "normal")
-    this.doc.text(invoiceData.company.address.street1, this.margin, yPos)
+    this.doc.text(invoiceData.client.address.street1, this.margin, yPos)
 
-    if (invoiceData.company.address.street2) {
+    if (invoiceData.client.address.street2) {
       yPos += 5
-      this.doc.text(invoiceData.company.address.street2, this.margin, yPos)
+      this.doc.text(invoiceData.client.address.street2, this.margin, yPos)
     }
 
     yPos += 5
     this.doc.text(
-      `${invoiceData.company.address.city}, ${invoiceData.company.address.state} ${invoiceData.company.address.zip}`,
+      `${invoiceData.client.address.city}, ${invoiceData.client.address.state} ${invoiceData.client.address.zip}`,
       this.margin,
       yPos,
     )
 
     yPos += 5
-    this.doc.text(invoiceData.company.address.country, this.margin, yPos)
+    this.doc.text(invoiceData.client.address.country, this.margin, yPos)
     
     // Add line separator
     yPos += 8

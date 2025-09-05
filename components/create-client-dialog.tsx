@@ -19,7 +19,7 @@ import { Separator } from "@/components/ui/separator"
 import { useToast } from "@/hooks/use-toast"
 import { Loader2, Building, Mail, MapPin } from "lucide-react"
 
-interface CompanyFormData {
+interface ClientFormData {
   name: string
   email: string
   address: {
@@ -32,16 +32,16 @@ interface CompanyFormData {
   }
 }
 
-interface CreateCompanyDialogProps {
+interface CreateClientDialogProps {
   children: React.ReactNode
-  onCompanyCreated?: () => void
+  onClientCreated?: () => void
 }
 
-export function CreateCompanyDialog({ children, onCompanyCreated }: CreateCompanyDialogProps) {
+export function CreateClientDialog({ children, onClientCreated }: CreateClientDialogProps) {
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const { toast } = useToast()
-  const [formData, setFormData] = useState<CompanyFormData>({
+  const [formData, setFormData] = useState<ClientFormData>({
     name: "",
     email: "",
     address: {
@@ -77,7 +77,7 @@ export function CreateCompanyDialog({ children, onCompanyCreated }: CreateCompan
     setLoading(true)
 
     try {
-      const response = await fetch("/api/companies", {
+      const response = await fetch("/api/clients", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -87,8 +87,8 @@ export function CreateCompanyDialog({ children, onCompanyCreated }: CreateCompan
 
       if (response.ok) {
         toast({
-          title: "Company created",
-          description: "The company has been successfully added.",
+          title: "Client created",
+          description: "The client has been successfully added.",
         })
         setOpen(false)
         setFormData({
@@ -103,15 +103,15 @@ export function CreateCompanyDialog({ children, onCompanyCreated }: CreateCompan
             zip: "",
           },
         })
-        onCompanyCreated?.()
+        onClientCreated?.()
       } else {
-        throw new Error("Failed to create company")
+        throw new Error("Failed to create client")
       }
     } catch (error) {
-      console.error("Error creating company:", error)
+      console.error("Error creating client:", error)
       toast({
         title: "Error",
-        description: "Failed to create company. Please try again.",
+        description: "Failed to create client. Please try again.",
         variant: "destructive",
       })
     } finally {
@@ -126,28 +126,28 @@ export function CreateCompanyDialog({ children, onCompanyCreated }: CreateCompan
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Building className="h-5 w-5 text-primary" />
-            Add New Company
+            Add New Client
           </DialogTitle>
-          <DialogDescription>Add a company that you'll be sending invoices to</DialogDescription>
+          <DialogDescription>Add a client that you'll be sending invoices to</DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit}>
           <div className="overflow-y-auto max-h-[calc(90vh-200px)] min-h-[200px] space-y-4 p-1">
-            {/* Company Information */}
+            {/* Client Information */}
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="name">Company Name <span className="text-red-500">*</span></Label>
+                <Label htmlFor="name">Client Name <span className="text-red-500">*</span></Label>
                 <Input
                   id="name"
                   value={formData.name}
                   onChange={(e) => updateFormData("name", e.target.value)}
-                  placeholder="Enter company name"
+                  placeholder="Enter client name"
                   required
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="email">Email Address <span className="text-red-500">*</span></Label>
+                <Label htmlFor="email">Client Email <span className="text-red-500">*</span></Label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                   <Input
@@ -155,7 +155,7 @@ export function CreateCompanyDialog({ children, onCompanyCreated }: CreateCompan
                     type="email"
                     value={formData.email}
                     onChange={(e) => updateFormData("email", e.target.value)}
-                    placeholder="Enter company email"
+                    placeholder="Enter client email"
                     className="pl-10"
                     required
                   />
@@ -169,7 +169,7 @@ export function CreateCompanyDialog({ children, onCompanyCreated }: CreateCompan
             <div className="space-y-4">
               <div className="flex items-center gap-2">
                 <MapPin className="h-4 w-4 text-primary" />
-                <Label className="text-sm font-medium">Company Address</Label>
+                <Label className="text-sm font-medium">Client Address</Label>
               </div>
 
               <div className="space-y-4">
@@ -255,7 +255,7 @@ export function CreateCompanyDialog({ children, onCompanyCreated }: CreateCompan
                   Creating...
                 </>
               ) : (
-                "Create Company"
+                "Create Client"
               )}
             </Button>
           </DialogFooter>

@@ -5,8 +5,8 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
-export function formatCompanyNameForFilename(companyName: string): string {
-  return companyName
+export function formatClientNameForFilename(clientName: string): string {
+  return clientName
     .toLowerCase()
     .replace(/[^a-z0-9\s]/g, '') // Remove special characters
     .replace(/\s+/g, '-') // Replace spaces with dashes

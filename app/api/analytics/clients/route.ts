@@ -11,21 +11,21 @@ export async function GET(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url)
-    const companyId = searchParams.get("companyId")
+    const clientId = searchParams.get("clientId")
 
-    const analytics = await DatabaseService.getCompanyAnalytics(userId, companyId || undefined)
+    const analytics = await DatabaseService.getClientAnalytics(userId, clientId || undefined)
 
-    if (companyId && !analytics) {
-      return NextResponse.json({ error: "Company not found" }, { status: 404 })
+    if (clientId && !analytics) {
+      return NextResponse.json({ error: "Client not found" }, { status: 404 })
     }
 
-    if (companyId) {
+    if (clientId) {
       return NextResponse.json(analytics)
     } else {
-      return NextResponse.json({ companiesAnalytics: analytics })
+      return NextResponse.json({ clientsAnalytics: analytics })
     }
   } catch (error) {
-    console.error("Error fetching company analytics:", error)
+    console.error("Error fetching client analytics:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }

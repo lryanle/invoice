@@ -6,7 +6,7 @@ import { Separator } from "@/components/ui/separator"
 import { Badge } from "@/components/ui/badge"
 import { Loader2 } from "lucide-react"
 
-interface Company {
+interface Client {
   _id: string
   name: string
   email: string
@@ -44,7 +44,7 @@ interface LineItem {
 }
 
 interface LiveInvoicePreviewProps {
-  companyId: string
+  clientId: string
   date: string
   dueDate: string
   customerRef: string
@@ -57,7 +57,7 @@ interface LiveInvoicePreviewProps {
 }
 
 export function LiveInvoicePreview({
-  companyId,
+  clientId,
   date,
   dueDate,
   customerRef,
@@ -68,13 +68,13 @@ export function LiveInvoicePreview({
   subtotal,
   total,
 }: LiveInvoicePreviewProps) {
-  const [company, setCompany] = useState<Company | null>(null)
+  const [client, setClient] = useState<Client | null>(null)
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     fetchData()
-  }, [companyId])
+  }, [clientId])
 
   const fetchData = async () => {
     setLoading(true)
@@ -86,15 +86,15 @@ export function LiveInvoicePreview({
         setUserProfile(profileData)
       }
 
-      // Fetch company if selected
-      if (companyId) {
-        const companyResponse = await fetch(`/api/companies/${companyId}`)
-        if (companyResponse.ok) {
-          const companyData = await companyResponse.json()
-          setCompany(companyData)
+      // Fetch client if selected
+      if (clientId) {
+        const clientResponse = await fetch(`/api/clients/${clientId}`)
+        if (clientResponse.ok) {
+          const clientData = await clientResponse.json()
+          setClient(clientData)
         }
       } else {
-        setCompany(null)
+        setClient(null)
       }
     } catch (error) {
       console.error("Error fetching data:", error)
@@ -192,21 +192,21 @@ export function LiveInvoicePreview({
             {/* To Section */}
             <div className="space-y-3">
               <h3 className="font-bold text-sm text-blue-600 border-b border-blue-200 pb-1">BILL TO</h3>
-              {company ? (
+              {client ? (
                 <div className="text-sm space-y-1 text-gray-700">
-                  <div className="font-semibold text-base text-black">{company.name}</div>
-                  <div>{company.email}</div>
+                  <div className="font-semibold text-base text-black">{client.name}</div>
+                  <div>{client.email}</div>
                   <div className="pt-2 space-y-1">
-                    <div>{company.address.street1}</div>
-                    {company.address.street2 && <div>{company.address.street2}</div>}
+                    <div>{client.address.street1}</div>
+                    {client.address.street2 && <div>{client.address.street2}</div>}
                     <div>
-                      {company.address.city}, {company.address.state} {company.address.zip}
+                      {client.address.city}, {client.address.state} {client.address.zip}
                     </div>
-                    <div>{company.address.country}</div>
+                    <div>{client.address.country}</div>
                   </div>
                 </div>
               ) : (
-                <div className="text-sm text-gray-500 italic">Please select a company</div>
+                <div className="text-sm text-gray-500 italic">Please select a client</div>
               )}
             </div>
           </div>

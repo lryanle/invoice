@@ -11,7 +11,7 @@ export default function HomePage() {
           <Card className="w-full max-w-md">
             <CardHeader className="text-center">
               <CardTitle className="text-2xl font-bold text-primary">invoice.lryanle.com</CardTitle>
-              <CardDescription>Professional invoice management with PDF export and company tracking</CardDescription>
+              <CardDescription>Professional invoice management with PDF export and client tracking</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-2 gap-4 text-center">
@@ -21,7 +21,7 @@ export default function HomePage() {
                 </div>
                 <div className="flex flex-col items-center space-y-2">
                   <Building2 className="h-8 w-8 text-primary" />
-                  <span className="text-sm text-muted-foreground">Manage Companies</span>
+                  <span className="text-sm text-muted-foreground">Manage Clients</span>
                 </div>
                 <div className="flex flex-col items-center space-y-2">
                   <DollarSign className="h-8 w-8 text-primary" />

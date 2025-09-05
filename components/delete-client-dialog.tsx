@@ -17,18 +17,18 @@ import {
 import { useToast } from "@/hooks/use-toast"
 import { Loader2 } from "lucide-react"
 
-interface Company {
+interface Client {
   _id: string
   name: string
 }
 
-interface DeleteCompanyDialogProps {
+interface DeleteClientDialogProps {
   children: React.ReactNode
-  company: Company
-  onCompanyDeleted?: () => void
+  client: Client
+  onClientDeleted?: () => void
 }
 
-export function DeleteCompanyDialog({ children, company, onCompanyDeleted }: DeleteCompanyDialogProps) {
+export function DeleteClientDialog({ children, client, onClientDeleted }: DeleteClientDialogProps) {
   const [loading, setLoading] = useState(false)
   const { toast } = useToast()
 
@@ -36,20 +36,20 @@ export function DeleteCompanyDialog({ children, company, onCompanyDeleted }: Del
     setLoading(true)
 
     try {
-      const response = await fetch(`/api/companies/${company._id}`, {
+      const response = await fetch(`/api/clients/${client._id}`, {
         method: "DELETE",
       })
 
       if (response.ok) {
-        onCompanyDeleted?.()
+        onClientDeleted?.()
       } else {
-        throw new Error("Failed to delete company")
+        throw new Error("Failed to delete client")
       }
     } catch (error) {
-      console.error("Error deleting company:", error)
+      console.error("Error deleting client:", error)
       toast({
         title: "Error",
-        description: "Failed to delete company. Please try again.",
+        description: "Failed to delete client. Please try again.",
         variant: "destructive",
       })
     } finally {
@@ -62,10 +62,10 @@ export function DeleteCompanyDialog({ children, company, onCompanyDeleted }: Del
       <AlertDialogTrigger asChild>{children}</AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Delete Company</AlertDialogTitle>
+          <AlertDialogTitle>Delete Client</AlertDialogTitle>
           <AlertDialogDescription>
-            Are you sure you want to delete "{company.name}"? This action cannot be undone. All invoices associated with
-            this company will remain but the company information will be removed.
+            Are you sure you want to delete "{client.name}"? This action cannot be undone. All invoices associated with
+            this client will remain but the client information will be removed.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
@@ -81,7 +81,7 @@ export function DeleteCompanyDialog({ children, company, onCompanyDeleted }: Del
                 Deleting...
               </>
             ) : (
-              "Delete Company"
+              "Delete Client"
             )}
           </AlertDialogAction>
         </AlertDialogFooter>

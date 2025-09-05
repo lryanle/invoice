@@ -17,12 +17,12 @@ import {
 } from "recharts"
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
 
-interface CompanyAnalyticsProps {
-  companyId: string
+interface ClientAnalyticsProps {
+  clientId: string
 }
 
-interface CompanyAnalyticsData {
-  company?: {
+interface ClientAnalyticsData {
+  client?: {
     _id: string
     name: string
   }
@@ -42,9 +42,9 @@ interface CompanyAnalyticsData {
     revenue: number
     invoiceCount: number
   }>
-  companiesAnalytics?: Array<{
+  clientsAnalytics?: Array<{
     _id: string
-    companyName: string
+    clientName: string
     totalInvoices: number
     totalRevenue: number
     averageInvoice: number
@@ -54,14 +54,14 @@ interface CompanyAnalyticsData {
 
 const COLORS = ["#3b82f6", "#ef4444", "#22c55e", "#f59e0b", "#8b5cf6", "#06b6d4", "#f97316"]
 
-export function CompanyAnalytics({ companyId }: CompanyAnalyticsProps) {
-  const [data, setData] = useState<CompanyAnalyticsData | null>(null)
+export function ClientAnalytics({ clientId }: ClientAnalyticsProps) {
+  const [data, setData] = useState<ClientAnalyticsData | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     const fetchAnalytics = async () => {
       try {
-        const url = companyId ? `/api/analytics/companies?companyId=${companyId}` : "/api/analytics/companies"
+        const url = clientId ? `/api/analytics/clients?clientId=${clientId}` : "/api/analytics/clients"
 
         const response = await fetch(url)
         if (response.ok) {
@@ -69,14 +69,14 @@ export function CompanyAnalytics({ companyId }: CompanyAnalyticsProps) {
           setData(analyticsData)
         }
       } catch (error) {
-        console.error("Error fetching company analytics:", error)
+        console.error("Error fetching client analytics:", error)
       } finally {
         setLoading(false)
       }
     }
 
     fetchAnalytics()
-  }, [companyId])
+  }, [clientId])
 
   if (loading) {
     return <div className="text-center py-8">Loading analytics...</div>
@@ -86,14 +86,14 @@ export function CompanyAnalytics({ companyId }: CompanyAnalyticsProps) {
     return <div className="text-center py-8">No analytics data available</div>
   }
 
-  // Show overview of all companies
-  if (!companyId && data.companiesAnalytics) {
+  // Show overview of all clients
+  if (!clientId && data.clientsAnalytics) {
     return (
       <div className="space-y-6">
         <Card>
           <CardHeader>
-            <CardTitle>Companies Overview</CardTitle>
-            <CardDescription>Performance comparison across all companies</CardDescription>
+            <CardTitle>Clients Overview</CardTitle>
+            <CardDescription>Performance comparison across all clients</CardDescription>
           </CardHeader>
           <CardContent>
             <ChartContainer
@@ -103,9 +103,9 @@ export function CompanyAnalytics({ companyId }: CompanyAnalyticsProps) {
               className="h-[400px]"
             >
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={data.companiesAnalytics.slice(0, 10)}>
+                <BarChart data={data.clientsAnalytics.slice(0, 10)}>
                   <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="companyName" angle={-45} textAnchor="end" height={100} />
+                  <XAxis dataKey="clientName" angle={-45} textAnchor="end" height={100} />
                   <YAxis />
                   <ChartTooltip content={<ChartTooltipContent />} />
                   <Bar dataKey="totalRevenue" fill="var(--color-totalRevenue)" />
@@ -116,23 +116,23 @@ export function CompanyAnalytics({ companyId }: CompanyAnalyticsProps) {
         </Card>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {data.companiesAnalytics.slice(0, 6).map((company) => (
-            <Card key={company._id}>
+          {data.clientsAnalytics.slice(0, 6).map((client) => (
+            <Card key={client._id}>
               <CardHeader className="pb-2">
-                <CardTitle className="text-lg">{company.companyName}</CardTitle>
+                <CardTitle className="text-lg">{client.clientName}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
                 <div className="flex justify-between">
                   <span className="text-sm text-muted-foreground">Total Revenue:</span>
-                  <span className="font-medium">${company.totalRevenue.toLocaleString()}</span>
+                  <span className="font-medium">${client.totalRevenue.toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-sm text-muted-foreground">Invoices:</span>
-                  <span className="font-medium">{company.totalInvoices}</span>
+                  <span className="font-medium">{client.totalInvoices}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-sm text-muted-foreground">Avg Invoice:</span>
-                  <span className="font-medium">${company.averageInvoice.toFixed(2)}</span>
+                  <span className="font-medium">${client.averageInvoice.toFixed(2)}</span>
                 </div>
               </CardContent>
             </Card>
@@ -142,14 +142,14 @@ export function CompanyAnalytics({ companyId }: CompanyAnalyticsProps) {
     )
   }
 
-  // Show specific company analytics
-  if (companyId && data.company && data.stats) {
+  // Show specific client analytics
+  if (clientId && data.client && data.stats) {
     return (
       <div className="space-y-6">
         <Card>
           <CardHeader>
-            <CardTitle>{data.company.name} Analytics</CardTitle>
-            <CardDescription>Detailed performance metrics for this company</CardDescription>
+            <CardTitle>{data.client.name} Analytics</CardTitle>
+            <CardDescription>Detailed performance metrics for this client</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -173,7 +173,7 @@ export function CompanyAnalytics({ companyId }: CompanyAnalyticsProps) {
           <Card>
             <CardHeader>
               <CardTitle>Revenue Timeline</CardTitle>
-              <CardDescription>Monthly revenue for {data.company.name}</CardDescription>
+              <CardDescription>Monthly revenue for {data.client.name}</CardDescription>
             </CardHeader>
             <CardContent>
               <ChartContainer
@@ -236,5 +236,5 @@ export function CompanyAnalytics({ companyId }: CompanyAnalyticsProps) {
     )
   }
 
-  return <div className="text-center py-8">No data available for the selected company</div>
+  return <div className="text-center py-8">No data available for the selected client</div>
 }

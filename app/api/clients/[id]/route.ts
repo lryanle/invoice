@@ -11,15 +11,15 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const company = await DatabaseService.getCompanyById(id)
+    const client = await DatabaseService.getClientById(id)
 
-    if (!company || company.userId !== userId) {
-      return NextResponse.json({ error: "Company not found" }, { status: 404 })
+    if (!client || client.userId !== userId) {
+      return NextResponse.json({ error: "Client not found" }, { status: 404 })
     }
 
-    return NextResponse.json(company)
+    return NextResponse.json(client)
   } catch (error) {
-    console.error("Error fetching company:", error)
+    console.error("Error fetching client:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }
@@ -37,17 +37,17 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     const { name, email, address } = body
 
     // Verify ownership
-    const company = await DatabaseService.getCompanyById(id)
-    if (!company || company.userId !== userId) {
-      return NextResponse.json({ error: "Company not found" }, { status: 404 })
+    const client = await DatabaseService.getClientById(id)
+    if (!client || client.userId !== userId) {
+      return NextResponse.json({ error: "Client not found" }, { status: 404 })
     }
 
-    await DatabaseService.updateCompany(id, { name, email, address })
-    const updatedCompany = await DatabaseService.getCompanyById(id)
+    await DatabaseService.updateClient(id, { name, email, address })
+    const updatedClient = await DatabaseService.getClientById(id)
 
-    return NextResponse.json(updatedCompany)
+    return NextResponse.json(updatedClient)
   } catch (error) {
-    console.error("Error updating company:", error)
+    console.error("Error updating client:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }
@@ -62,15 +62,15 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
     }
 
     // Verify ownership
-    const company = await DatabaseService.getCompanyById(id)
-    if (!company || company.userId !== userId) {
-      return NextResponse.json({ error: "Company not found" }, { status: 404 })
+    const client = await DatabaseService.getClientById(id)
+    if (!client || client.userId !== userId) {
+      return NextResponse.json({ error: "Client not found" }, { status: 404 })
     }
 
-    await DatabaseService.deleteCompany(id)
+    await DatabaseService.deleteClient(id)
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error("Error deleting company:", error)
+    console.error("Error deleting client:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }

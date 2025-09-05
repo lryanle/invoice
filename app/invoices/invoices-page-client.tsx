@@ -38,8 +38,8 @@ import Link from "next/link";
 interface Invoice {
   _id: string;
   invoiceNumber: string;
-  companyId: string;
-  companyName: string;
+  clientId: string;
+  clientName: string;
   date: string;
   dueDate: string;
   customerRef?: string;
@@ -48,19 +48,19 @@ interface Invoice {
   createdAt: string;
 }
 
-interface Company {
+interface Client {
   _id: string;
   name: string;
 }
 
 export function InvoicesPageClient() {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
-  const [companies, setCompanies] = useState<Company[]>([]);
+  const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [companyFilter, setCompanyFilter] = useState<string>("all");
+  const [clientFilter, setClientFilter] = useState<string>("all");
   const { toast } = useToast();
 
   useEffect(() => {
@@ -76,11 +76,11 @@ export function InvoicesPageClient() {
         setInvoices(invoicesData);
       }
 
-      // Fetch companies
-      const companiesResponse = await fetch("/api/companies");
-      if (companiesResponse.ok) {
-        const companiesData = await companiesResponse.json();
-        setCompanies(companiesData);
+      // Fetch clients
+      const clientsResponse = await fetch("/api/clients");
+      if (clientsResponse.ok) {
+        const clientsData = await clientsResponse.json();
+        setClients(clientsData);
       }
     } catch (error) {
       console.error("Error fetching data:", error);
@@ -155,23 +155,23 @@ export function InvoicesPageClient() {
     }
   };
 
-  const getCompanyName = (companyId: string) => {
-    const company = companies.find(c => c._id === companyId);
-    return company?.name || "Unknown Company";
+  const getClientName = (clientId: string) => {
+    const client = clients.find(c => c._id === clientId);
+    return client?.name || "Unknown Client";
   };
 
   const filteredInvoices = invoices.filter((invoice) => {
-    const companyName = getCompanyName(invoice.companyId);
+    const clientName = getClientName(invoice.clientId);
     const matchesSearch =
       invoice.invoiceNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      companyName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      clientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       invoice.customerRef?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus =
       statusFilter === "all" || invoice.status === statusFilter;
-    const matchesCompany =
-      companyFilter === "all" || invoice.companyId === companyFilter;
+    const matchesClient =
+      clientFilter === "all" || invoice.clientId === clientFilter;
 
-    return matchesSearch && matchesStatus && matchesCompany;
+    return matchesSearch && matchesStatus && matchesClient;
   });
 
   const formatCurrency = (amount: number) => {
@@ -222,7 +222,7 @@ export function InvoicesPageClient() {
         <TableHeader>
           <TableRow>
             <TableHead>Invoice #</TableHead>
-            <TableHead>Company</TableHead>
+            <TableHead>Client</TableHead>
             <TableHead>Reference</TableHead>
             <TableHead>Date</TableHead>
             <TableHead>Due Date</TableHead>
@@ -243,7 +243,7 @@ export function InvoicesPageClient() {
               <TableCell>
                 <div className="flex items-center gap-2">
                   <Building className="h-4 w-4 text-muted-foreground" />
-                  {getCompanyName(invoice.companyId)}
+                  {getClientName(invoice.clientId)}
                 </div>
               </TableCell>
               <TableCell>
@@ -358,15 +358,15 @@ export function InvoicesPageClient() {
                   </SelectContent>
                 </Select>
 
-                <Select value={companyFilter} onValueChange={setCompanyFilter}>
+                <Select value={clientFilter} onValueChange={setClientFilter}>
                   <SelectTrigger className="w-48">
-                    <SelectValue placeholder="Filter by company" />
+                    <SelectValue placeholder="Filter by client" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All Companies</SelectItem>
-                    {companies.map((company) => (
-                      <SelectItem key={company._id} value={company._id}>
-                        {company.name}
+                    <SelectItem value="all">All Clients</SelectItem>
+                    {clients.map((client) => (
+                      <SelectItem key={client._id} value={client._id}>
+                        {client.name}
                       </SelectItem>
                     ))}
                   </SelectContent>

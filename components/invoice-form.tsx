@@ -14,8 +14,8 @@ import { LiveInvoicePreview } from "@/components/live-invoice-preview"
 import { useToast } from "@/hooks/use-toast"
 import { useRouter } from "next/navigation"
 import { CalendarIcon, Building, FileText, Save, Download, Loader2, Plus } from "lucide-react"
-import { CreateCompanyDialog } from "./create-company-dialog"
-import { formatCompanyNameForFilename } from "@/lib/utils"
+import { CreateClientDialog } from "./create-client-dialog"
+import { formatClientNameForFilename } from "@/lib/utils"
 
 function formatDate(date: Date | undefined) {
   if (!date) {
@@ -36,7 +36,7 @@ function isValidDate(date: Date | undefined) {
   return !isNaN(date.getTime())
 }
 
-interface Company {
+interface Client {
   _id: string
   name: string
   email: string
@@ -51,7 +51,7 @@ interface LineItem {
 }
 
 interface InvoiceFormData {
-  companyId: string
+  clientId: string
   date: string
   dueDate: string
   customerRef: string
@@ -66,7 +66,7 @@ interface InvoiceFormProps {
 }
 
 export function InvoiceForm({ invoiceId }: InvoiceFormProps) {
-  const [companies, setCompanies] = useState<Company[]>([])
+  const [clients, setClients] = useState<Client[]>([])
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [exporting, setExporting] = useState(false)
@@ -84,7 +84,7 @@ export function InvoiceForm({ invoiceId }: InvoiceFormProps) {
   const [dueDateValue, setDueDateValue] = useState(formatDate(dueDate))
 
   const [formData, setFormData] = useState<InvoiceFormData>({
-    companyId: "",
+    clientId: "",
     date: new Date().toISOString().split("T")[0],
     dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0], // 30 days from now
     customerRef: "",
@@ -95,7 +95,7 @@ export function InvoiceForm({ invoiceId }: InvoiceFormProps) {
   })
 
   useEffect(() => {
-    fetchCompanies()
+    fetchClients()
   }, [])
 
   // Load existing invoice for edit mode
@@ -110,7 +110,7 @@ export function InvoiceForm({ invoiceId }: InvoiceFormProps) {
           const invoiceDueDate = new Date(data.dueDate)
           
           setFormData({
-            companyId: data.companyId || "",
+            clientId: data.clientId || "",
             date: invoiceDate.toISOString().split("T")[0],
             dueDate: invoiceDueDate.toISOString().split("T")[0],
             customerRef: data.customerRef || "",
@@ -135,24 +135,24 @@ export function InvoiceForm({ invoiceId }: InvoiceFormProps) {
     loadInvoice()
   }, [invoiceId])
 
-  const fetchCompanies = async () => {
+  const fetchClients = async () => {
     setLoading(true)
     try {
-      const response = await fetch("/api/companies")
+      const response = await fetch("/api/clients")
       if (response.ok) {
         const data = await response.json()
-        setCompanies(data)
+        setClients(data)
         
-        // Auto-select the most recent company if creating a new invoice
+        // Auto-select the most recent client if creating a new invoice
         if (!invoiceId) {
-          await fetchRecentCompany(data)
+          await fetchRecentClient(data)
         }
       }
     } catch (error) {
-      console.error("Error fetching companies:", error)
+      console.error("Error fetching clients:", error)
       toast({
         title: "Error",
-        description: "Failed to load companies. Please try again.",
+        description: "Failed to load clients. Please try again.",
         variant: "destructive",
       })
     } finally {
@@ -160,24 +160,24 @@ export function InvoiceForm({ invoiceId }: InvoiceFormProps) {
     }
   }
 
-  const fetchRecentCompany = async (companies: Company[]) => {
+  const fetchRecentClient = async (clients: Client[]) => {
     try {
-      const response = await fetch("/api/user/recent-company")
+      const response = await fetch("/api/user/recent-client")
       if (response.ok) {
         const data = await response.json()
-        if (data.companyId && companies.some(c => c._id === data.companyId)) {
-          // Update form data with the recent company
+        if (data.clientId && clients.some(c => c._id === data.clientId)) {
+          // Update form data with the recent client
           setFormData(prev => ({
             ...prev,
-            companyId: data.companyId
+            clientId: data.clientId
           }))
           
-          // Generate invoice number for the selected company
-          await generateInvoiceNumber(data.companyId)
+          // Generate invoice number for the selected client
+          await generateInvoiceNumber(data.clientId)
         }
       }
     } catch (error) {
-      console.error("Error fetching recent company:", error)
+      console.error("Error fetching recent client:", error)
     }
   }
 
@@ -188,10 +188,10 @@ export function InvoiceForm({ invoiceId }: InvoiceFormProps) {
     }))
   }
 
-  const generateInvoiceNumber = async (companyId: string) => {
-    if (!companyId) return
+  const generateInvoiceNumber = async (clientId: string) => {
+    if (!clientId) return
     try {
-      const response = await fetch(`/api/invoices/generate-number?companyId=${companyId}`)
+      const response = await fetch(`/api/invoices/generate-number?clientId=${clientId}`)
       if (response.ok) {
         const data = await response.json()
         updateFormData("invoiceNumber", data.invoiceNumber)
@@ -214,10 +214,10 @@ export function InvoiceForm({ invoiceId }: InvoiceFormProps) {
   }
 
   const handleSave = async (status: "draft" | "complete" = "draft") => {
-    if (!formData.companyId) {
+    if (!formData.clientId) {
       toast({
         title: "Error",
-        description: "Please select a company for this invoice.",
+        description: "Please select a client for this invoice.",
         variant: "destructive",
       })
       return
@@ -283,10 +283,10 @@ export function InvoiceForm({ invoiceId }: InvoiceFormProps) {
   }
 
   const handleSaveAndExport = async () => {
-    if (!formData.companyId) {
+    if (!formData.clientId) {
       toast({
         title: "Error",
-        description: "Please select a company for this invoice.",
+        description: "Please select a client for this invoice.",
         variant: "destructive",
       })
       return
@@ -397,34 +397,34 @@ export function InvoiceForm({ invoiceId }: InvoiceFormProps) {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="company">Company <span className="text-red-500">*</span></Label>
+              <Label htmlFor="client">Client <span className="text-red-500">*</span></Label>
               <span className="flex items-center gap-2">
-                <Select value={formData.companyId} onValueChange={(value) => {
-                  updateFormData("companyId", value)
+                <Select value={formData.clientId} onValueChange={(value) => {
+                  updateFormData("clientId", value)
                   // Auto-generate invoice number if field is empty
                   if (!formData.invoiceNumber.trim()) {
                     generateInvoiceNumber(value)
                   }
                 }}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select a company" />
+                    <SelectValue placeholder="Select a client" />
                   </SelectTrigger>
                   <SelectContent>
-                    {companies.map((company) => (
-                      <SelectItem key={company._id} value={company._id}>
+                    {clients.map((client) => (
+                      <SelectItem key={client._id} value={client._id}>
                         <div className="flex items-center gap-2">
                           <Building className="h-4 w-4" />
-                          {company.name}
+                          {client.name}
                         </div>
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
-                <CreateCompanyDialog>
+                <CreateClientDialog>
                   <Button variant="outline">
                     <Plus className="h-4 w-4" />
                   </Button>
-                </CreateCompanyDialog>
+                </CreateClientDialog>
               </span>
             </div>
 
@@ -675,7 +675,7 @@ export function InvoiceForm({ invoiceId }: InvoiceFormProps) {
       {/* Live Invoice Preview */}
       <div className="space-y-6  min-h-[500px] h-[80vh]">
         <LiveInvoicePreview
-          companyId={formData.companyId}
+          clientId={formData.clientId}
           date={formData.date}
           dueDate={formData.dueDate}
           customerRef={formData.customerRef}

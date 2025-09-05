@@ -19,7 +19,7 @@ export interface UserProfile {
   updatedAt: Date
 }
 
-export interface Company {
+export interface Client {
   _id?: ObjectId
   userId: string // Clerk user ID
   name: string
@@ -48,7 +48,7 @@ export interface LineItem {
 export interface Invoice {
   _id?: ObjectId
   userId: string // Clerk user ID
-  companyId: string // Company ObjectId as string
+  clientId: string // Client ObjectId as string
   invoiceNumber: string
   date: Date
   dueDate: Date

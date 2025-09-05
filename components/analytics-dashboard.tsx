@@ -5,34 +5,34 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { UserAnalytics } from "@/components/user-analytics"
-import { CompanyAnalytics } from "@/components/company-analytics"
+import { ClientAnalytics } from "@/components/client-analytics"
 
-interface Company {
+interface Client {
   _id: string
   name: string
 }
 
 export function AnalyticsDashboard() {
-  const [companies, setCompanies] = useState<Company[]>([])
-  const [selectedCompany, setSelectedCompany] = useState<string>("all")
+  const [clients, setClients] = useState<Client[]>([])
+  const [selectedClient, setSelectedClient] = useState<string>("all")
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const fetchCompanies = async () => {
+    const fetchClients = async () => {
       try {
-        const response = await fetch("/api/companies")
+        const response = await fetch("/api/clients")
         if (response.ok) {
           const data = await response.json()
-          setCompanies(data)
+          setClients(data)
         }
       } catch (error) {
-        console.error("Error fetching companies:", error)
+        console.error("Error fetching clients:", error)
       } finally {
         setLoading(false)
       }
     }
 
-    fetchCompanies()
+    fetchClients()
   }, [])
 
   return (
@@ -40,31 +40,31 @@ export function AnalyticsDashboard() {
       <Tabs defaultValue="user" className="w-full">
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="user">User Analytics</TabsTrigger>
-          <TabsTrigger value="company">Company Analytics</TabsTrigger>
+          <TabsTrigger value="client">Client Analytics</TabsTrigger>
         </TabsList>
 
         <TabsContent value="user" className="space-y-6">
           <UserAnalytics />
         </TabsContent>
 
-        <TabsContent value="company" className="space-y-6">
+        <TabsContent value="client" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Company Selection</CardTitle>
+              <CardTitle>Client Selection</CardTitle>
               <CardDescription>
-                Select a company to view detailed analytics, or leave blank to see overview of all companies
+                Select a client to view detailed analytics, or leave blank to see overview of all clients
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Select value={selectedCompany} onValueChange={setSelectedCompany}>
+              <Select value={selectedClient} onValueChange={setSelectedClient}>
                 <SelectTrigger className="w-full max-w-md">
-                  <SelectValue placeholder="Select a company (optional)" />
+                  <SelectValue placeholder="Select a client (optional)" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Companies Overview</SelectItem>
-                  {companies.map((company) => (
-                    <SelectItem key={company._id} value={company._id}>
-                      {company.name}
+                  <SelectItem value="all">All Clients Overview</SelectItem>
+                  {clients.map((client) => (
+                    <SelectItem key={client._id} value={client._id}>
+                      {client.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -72,7 +72,7 @@ export function AnalyticsDashboard() {
             </CardContent>
           </Card>
 
-          <CompanyAnalytics companyId={selectedCompany} />
+          <ClientAnalytics clientId={selectedClient} />
         </TabsContent>
       </Tabs>
     </div>

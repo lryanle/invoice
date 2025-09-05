@@ -34,7 +34,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     }
 
     const body = await request.json()
-    const { companyId, date, dueDate, customerRef, invoiceNumber, lineItems, tax, notes, status } = body
+    const { clientId, date, dueDate, customerRef, invoiceNumber, lineItems, tax, notes, status } = body
 
     // Verify ownership
     const invoice = await DatabaseService.getInvoiceById(id)
@@ -47,7 +47,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     const total = subtotal + (tax || 0)
 
     await DatabaseService.updateInvoice(id, {
-      companyId,
+      clientId,
       invoiceNumber,
       date: new Date(date),
       dueDate: new Date(dueDate),

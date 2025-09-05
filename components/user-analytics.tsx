@@ -21,7 +21,7 @@ import { SkeletonStatCard, SkeletonChart } from "@/components/ui/skeleton"
 interface UserAnalyticsData {
   basicStats: {
     totalInvoices: number
-    totalCompanies: number
+    totalClients: number
     totalRevenue: number
     averageInvoice: number
     maxInvoice: number
@@ -138,10 +138,10 @@ export function UserAnalytics() {
 
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Total Companies</CardTitle>
+            <CardTitle className="text-sm font-medium">Total Clients</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{data.basicStats.totalCompanies}</div>
+            <div className="text-2xl font-bold">{data.basicStats.totalClients}</div>
           </CardContent>
         </Card>
       </div>

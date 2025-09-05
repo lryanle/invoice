@@ -2,7 +2,7 @@ import { type NextRequest, NextResponse } from "next/server"
 import { auth } from "@clerk/nextjs/server"
 import { DatabaseService } from "@/lib/database"
 import { PDFGenerator } from "@/lib/pdf-generator"
-import { formatCompanyNameForFilename } from "@/lib/utils"
+import { formatClientNameForFilename } from "@/lib/utils"
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -25,10 +25,10 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       return NextResponse.json({ error: "User profile not found" }, { status: 404 })
     }
 
-    // Get company
-    const company = await DatabaseService.getCompanyById(invoice.companyId)
-    if (!company) {
-      return NextResponse.json({ error: "Company not found" }, { status: 404 })
+    // Get client
+    const client = await DatabaseService.getClientById(invoice.clientId)
+    if (!client) {
+      return NextResponse.json({ error: "Client not found" }, { status: 404 })
     }
 
     // Generate PDF
@@ -39,7 +39,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       dueDate: invoice.dueDate.toISOString(),
       customerRef: invoice.customerRef,
       userProfile,
-      company,
+      client,
       lineItems: invoice.lineItems,
       subtotal: invoice.subtotal,
       tax: invoice.tax || 0,
@@ -50,8 +50,8 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     // Return PDF as buffer
     const pdfBuffer = Buffer.from(pdf.output("arraybuffer"))
 
-    const formattedCompanyName = formatCompanyNameForFilename(company.name)
-    const filename = `invoice-${formattedCompanyName}-${invoice.invoiceNumber}.pdf`
+    const formattedClientName = formatClientNameForFilename(client.name)
+    const filename = `invoice-${formattedClientName}-${invoice.invoiceNumber}.pdf`
 
     return new NextResponse(pdfBuffer, {
       headers: {

@@ -10,20 +10,20 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    // Get all invoices and companies for the user
-    const [invoices, companies] = await Promise.all([
+    // Get all invoices and clients for the user
+    const [invoices, clients] = await Promise.all([
       DatabaseService.getInvoicesByUser(userId),
-      DatabaseService.getCompaniesByUser(userId)
+      DatabaseService.getClientsByUser(userId)
     ])
 
     const totalInvoices = invoices.length
-    const totalCompanies = companies.length
+    const totalClients = clients.length
     const totalInvoicedAmount = invoices.reduce((sum, invoice) => sum + invoice.total, 0)
     const averageInvoiceAmount = totalInvoices > 0 ? totalInvoicedAmount / totalInvoices : 0
 
     return NextResponse.json({
       totalInvoices,
-      totalCompanies,
+      totalClients,
       totalInvoicedAmount,
       averageInvoiceAmount,
     })
