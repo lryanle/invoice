@@ -21,6 +21,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { DeleteInvoiceDialog } from "@/components/delete-invoice-dialog";
+import { DateRangeFilter, DateRangeFilterValue } from "@/components/date-range-filter";
+import { AmountFilter, AmountFilterValue } from "@/components/amount-filter";
 import { useToast } from "@/hooks/use-toast";
 import {
   FileText,
@@ -61,6 +63,22 @@ export function InvoicesPageClient() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [clientFilter, setClientFilter] = useState<string>("all");
+  const [dateFilter, setDateFilter] = useState<DateRangeFilterValue>({
+    type: "range",
+    startDate: undefined,
+    endDate: undefined,
+    singleDate: undefined,
+  });
+  const [dueDateFilter, setDueDateFilter] = useState<DateRangeFilterValue>({
+    type: "range",
+    startDate: undefined,
+    endDate: undefined,
+    singleDate: undefined,
+  });
+  const [amountFilter, setAmountFilter] = useState<AmountFilterValue>({
+    operator: "equal",
+    amount: null,
+  });
   const { toast } = useToast();
 
   useEffect(() => {
@@ -160,6 +178,51 @@ export function InvoicesPageClient() {
     return client?.name || "Unknown Client";
   };
 
+  const matchesDateFilter = (invoiceDate: string, filter: DateRangeFilterValue) => {
+    if (!filter.startDate && !filter.endDate && !filter.singleDate) return true;
+    
+    const date = new Date(invoiceDate);
+    
+    if (filter.type === "range") {
+      if (filter.startDate && filter.endDate) {
+        return date >= filter.startDate && date <= filter.endDate;
+      } else if (filter.startDate) {
+        return date >= filter.startDate;
+      } else if (filter.endDate) {
+        return date <= filter.endDate;
+      }
+    } else if (filter.type === "before" && filter.singleDate) {
+      return date < filter.singleDate;
+    } else if (filter.type === "on" && filter.singleDate) {
+      return date.toDateString() === filter.singleDate.toDateString();
+    } else if (filter.type === "after" && filter.singleDate) {
+      return date > filter.singleDate;
+    }
+    
+    return true;
+  };
+
+  const matchesAmountFilter = (amount: number, filter: AmountFilterValue) => {
+    if (filter.amount === null || filter.amount === undefined) return true;
+    
+    switch (filter.operator) {
+      case "less_than":
+        return amount < filter.amount;
+      case "less_than_equal":
+        return amount <= filter.amount;
+      case "equal":
+        return amount === filter.amount;
+      case "greater_than":
+        return amount > filter.amount;
+      case "greater_than_equal":
+        return amount >= filter.amount;
+      case "not_equal":
+        return amount !== filter.amount;
+      default:
+        return true;
+    }
+  };
+
   const filteredInvoices = invoices.filter((invoice) => {
     const clientName = getClientName(invoice.clientId);
     const matchesSearch =
@@ -170,8 +233,11 @@ export function InvoicesPageClient() {
       statusFilter === "all" || invoice.status === statusFilter;
     const matchesClient =
       clientFilter === "all" || invoice.clientId === clientFilter;
+    const matchesDate = matchesDateFilter(invoice.date, dateFilter);
+    const matchesDueDate = matchesDateFilter(invoice.dueDate, dueDateFilter);
+    const matchesAmount = matchesAmountFilter(invoice.total, amountFilter);
 
-    return matchesSearch && matchesStatus && matchesClient;
+    return matchesSearch && matchesStatus && matchesClient && matchesDate && matchesDueDate && matchesAmount;
   });
 
   const formatCurrency = (amount: number) => {
@@ -334,43 +400,76 @@ export function InvoicesPageClient() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="flex gap-4 flex-wrap">
-                <div className="flex-1 min-w-64">
-                  <div className="relative">
-                    <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      placeholder="Search invoices..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="pl-10"
+              <div className="space-y-4">
+                {/* Search and Basic Filters */}
+                <div className="flex gap-4 flex-wrap">
+                  <div className="flex-1 min-w-64">
+                    <div className="relative">
+                      <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        placeholder="Search invoices..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="pl-10"
+                      />
+                    </div>
+                  </div>
+
+                  <Select value={statusFilter} onValueChange={setStatusFilter}>
+                    <SelectTrigger className="w-48">
+                      <SelectValue placeholder="Filter by status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Statuses</SelectItem>
+                      <SelectItem value="draft">Draft</SelectItem>
+                      <SelectItem value="complete">Complete</SelectItem>
+                    </SelectContent>
+                  </Select>
+
+                  <Select value={clientFilter} onValueChange={setClientFilter}>
+                    <SelectTrigger className="w-48">
+                      <SelectValue placeholder="Filter by client" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Clients</SelectItem>
+                      {clients.map((client) => (
+                        <SelectItem key={client._id} value={client._id}>
+                          {client.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Advanced Filters */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <label htmlFor="invoice-date-filter" className="text-sm font-medium">Invoice Date</label>
+                    <DateRangeFilter
+                      value={dateFilter}
+                      onChange={setDateFilter}
+                      placeholder="Filter by invoice date"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label htmlFor="due-date-filter" className="text-sm font-medium">Due Date</label>
+                    <DateRangeFilter
+                      value={dueDateFilter}
+                      onChange={setDueDateFilter}
+                      placeholder="Filter by due date"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label htmlFor="amount-filter" className="text-sm font-medium">Amount</label>
+                    <AmountFilter
+                      value={amountFilter}
+                      onChange={setAmountFilter}
+                      placeholder="Filter by amount"
                     />
                   </div>
                 </div>
-
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="w-48">
-                    <SelectValue placeholder="Filter by status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Statuses</SelectItem>
-                    <SelectItem value="draft">Draft</SelectItem>
-                    <SelectItem value="complete">Complete</SelectItem>
-                  </SelectContent>
-                </Select>
-
-                <Select value={clientFilter} onValueChange={setClientFilter}>
-                  <SelectTrigger className="w-48">
-                    <SelectValue placeholder="Filter by client" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Clients</SelectItem>
-                    {clients.map((client) => (
-                      <SelectItem key={client._id} value={client._id}>
-                        {client.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
               </div>
             </CardContent>
           </Card>
