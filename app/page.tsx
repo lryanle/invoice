@@ -1,9 +1,15 @@
+"use client"
+
 import { SignedOut, SignInButton } from "@clerk/nextjs"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { FileText, Building2, DollarSign, Download } from "lucide-react"
+import { useSearchParams } from "next/navigation"
 
 export default function HomePage() {
+  const searchParams = useSearchParams()
+  const redirectUrl = searchParams.get("redirect_url")
+
   return (
     <div className="min-h-screen bg-background">
       <SignedOut>
@@ -32,7 +38,10 @@ export default function HomePage() {
                   <span className="text-sm text-muted-foreground">Export PDF</span>
                 </div>
               </div>
-              <SignInButton mode="modal">
+              <SignInButton 
+                mode="modal"
+                forceRedirectUrl={redirectUrl || "/dashboard"}
+              >
                 <Button className="w-full" size="lg">
                   Sign In with Google
                 </Button>

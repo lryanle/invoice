@@ -7,6 +7,8 @@ import { ClerkProvider } from "@clerk/nextjs"
 import { Suspense } from "react"
 import { Toaster } from "@/components/ui/toaster"
 import { ConditionalNavbar } from "@/components/conditional-navbar"
+import { AuthErrorBoundary } from "@/components/auth-error-boundary"
+import { getClerkConfig } from "@/lib/clerk-config"
 import "./globals.css"
 
 export const metadata: Metadata = {
@@ -19,8 +21,26 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode
 }>) {
+  const clerkConfig = getClerkConfig()
+  
   return (
-    <ClerkProvider>
+    <ClerkProvider
+      publishableKey={clerkConfig.publishableKey}
+      signInUrl="/"
+      signUpUrl="/"
+      appearance={{
+        elements: {
+          formButtonPrimary: "bg-primary text-primary-foreground hover:bg-primary/90",
+          card: "bg-card text-card-foreground",
+          headerTitle: "text-foreground",
+          headerSubtitle: "text-muted-foreground",
+          socialButtonsBlockButton: "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
+          socialButtonsBlockButtonText: "text-foreground",
+          formFieldInput: "bg-background border-input text-foreground",
+          footerActionLink: "text-primary hover:text-primary/80",
+        },
+      }}
+    >
       <html lang="en">
         <link rel="icon" href="/favicon.ico" sizes="any" />
         <link
@@ -36,10 +56,12 @@ export default function RootLayout({
           sizes="<generated>"
         />
         <body className={`font-sans ${GeistSans.variable} ${GeistMono.variable}`}>
-          <ConditionalNavbar />
-          <Suspense fallback={null}>{children}</Suspense>
-          <Toaster />
-          <Analytics />
+          <AuthErrorBoundary>
+            <ConditionalNavbar />
+            <Suspense fallback={null}>{children}</Suspense>
+            <Toaster />
+            <Analytics />
+          </AuthErrorBoundary>
         </body>
       </html>
     </ClerkProvider>
