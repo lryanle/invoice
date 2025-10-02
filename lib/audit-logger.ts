@@ -1,8 +1,9 @@
 /**
- * Essential security logging for production
+ * Essential security logging for production with Sentry integration
  */
 
 import { NextRequest } from "next/server"
+import { sentryLogger } from "./sentry-logger"
 
 export enum AuditEventType {
   // Critical security events only
@@ -77,6 +78,11 @@ class AuditLogger {
       resource: entry.resource,
       details: entry.details,
     })
+
+    // Send to Sentry for critical events
+    if (request) {
+      await sentryLogger.logSecurityEvent(eventType, request, userId, details)
+    }
   }
 
   /**

@@ -8,6 +8,7 @@ import {
   isPublicAPIRoute, 
   isProtectedAPIRoute 
 } from "@/lib/auth-guards"
+import { sentryLogger } from "@/lib/sentry-logger"
 
 // Enhanced route matching with more granular control
 const isPublicRouteMatcher = createRouteMatcher([
@@ -30,6 +31,21 @@ export default clerkMiddleware(async (auth, req) => {
     return applySecurityHeaders(response)
   } catch (error) {
     console.error("Middleware error:", error)
+    
+    // Log error to Sentry
+    if (error instanceof Error) {
+      await sentryLogger.logSystemError(error, {
+        resource: req.url,
+        action: req.method,
+        ipAddress: req.headers.get("x-forwarded-for") || req.headers.get("x-real-ip") || "unknown",
+        userAgent: req.headers.get("user-agent") || undefined,
+        tags: {
+          component: "middleware",
+          errorType: "middleware_error",
+        },
+      })
+    }
+    
     const errorResponse = NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

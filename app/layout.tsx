@@ -8,6 +8,7 @@ import { Suspense } from "react"
 import { Toaster } from "@/components/ui/toaster"
 import { ConditionalNavbar } from "@/components/conditional-navbar"
 import { AuthErrorBoundary } from "@/components/auth-error-boundary"
+import { SentryUserContextProvider } from "@/components/sentry-user-context"
 import { getClerkConfig } from "@/lib/clerk-config"
 import "./globals.css"
 
@@ -60,10 +61,12 @@ export default function RootLayout({
         />
         <body className={`font-sans ${GeistSans.variable} ${GeistMono.variable}`}>
           <AuthErrorBoundary>
-            <ConditionalNavbar />
-            <Suspense fallback={null}>{children}</Suspense>
-            <Toaster />
-            <Analytics />
+            <SentryUserContextProvider>
+              <ConditionalNavbar />
+              <Suspense fallback={null}>{children}</Suspense>
+              <Toaster />
+              <Analytics />
+            </SentryUserContextProvider>
           </AuthErrorBoundary>
         </body>
       </html>
