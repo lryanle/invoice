@@ -398,34 +398,54 @@ export function InvoiceForm({ invoiceId }: InvoiceFormProps) {
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="client">Client <span className="text-red-500">*</span></Label>
-              <span className="flex items-center gap-2">
-                <Select value={formData.clientId} onValueChange={(value) => {
-                  updateFormData("clientId", value)
-                  // Auto-generate invoice number if field is empty
-                  if (!formData.invoiceNumber.trim()) {
-                    generateInvoiceNumber(value)
-                  }
-                }}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a client" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {clients.map((client) => (
-                      <SelectItem key={client._id} value={client._id}>
-                        <div className="flex items-center gap-2">
-                          <Building className="h-4 w-4" />
-                          {client.name}
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <CreateClientDialog>
-                  <Button variant="outline">
-                    <Plus className="h-4 w-4" />
-                  </Button>
-                </CreateClientDialog>
-              </span>
+              {clients.length === 0 ? (
+                <div className="border border-dashed border-muted-foreground/25 rounded-lg p-6 text-center space-y-3">
+                  <div className="flex flex-col items-center gap-2">
+                    <Building className="h-8 w-8 text-muted-foreground" />
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium">No clients found</p>
+                      <p className="text-xs text-muted-foreground">
+                        You need to create a client before creating an invoice
+                      </p>
+                    </div>
+                  </div>
+                  <CreateClientDialog onClientCreated={fetchClients}>
+                    <Button variant="default" size="sm">
+                      <Plus className="h-4 w-4 mr-2" />
+                      Create Your First Client
+                    </Button>
+                  </CreateClientDialog>
+                </div>
+              ) : (
+                <span className="flex items-center gap-2">
+                  <Select value={formData.clientId} onValueChange={(value) => {
+                    updateFormData("clientId", value)
+                    // Auto-generate invoice number if field is empty
+                    if (!formData.invoiceNumber.trim()) {
+                      generateInvoiceNumber(value)
+                    }
+                  }}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a client" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {clients.map((client) => (
+                        <SelectItem key={client._id} value={client._id}>
+                          <div className="flex items-center gap-2">
+                            <Building className="h-4 w-4" />
+                            {client.name}
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <CreateClientDialog onClientCreated={fetchClients}>
+                    <Button variant="outline">
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </CreateClientDialog>
+                </span>
+              )}
             </div>
 
             <div className="grid gap-4 md:grid-cols-3">
