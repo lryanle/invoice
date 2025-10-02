@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge"
 import { EditClientDialog } from "@/components/clients/edit-client-dialog"
 import { DeleteClientDialog } from "@/components/clients/delete-client-dialog"
 import { useToast } from "@/hooks/use-toast"
+import { useErrorHandler, fetchWithErrorHandling, parseApiError } from "@/lib/client-error-handler"
 import { Building, Building2, Mail, MapPin, Edit, Trash2 } from "lucide-react"
 import { SkeletonCard } from "@/components/ui/skeleton"
 
@@ -33,6 +34,7 @@ export const ClientList = forwardRef<ClientListRef>((props, ref) => {
   const [clients, setClients] = useState<Client[]>([])
   const [loading, setLoading] = useState(true)
   const { toast } = useToast()
+  const { handleError } = useErrorHandler()
 
   useEffect(() => {
     fetchClients()
@@ -40,20 +42,16 @@ export const ClientList = forwardRef<ClientListRef>((props, ref) => {
 
   const fetchClients = async () => {
     try {
-      const response = await fetch("/api/clients")
+      const response = await fetchWithErrorHandling("/api/clients", {}, "fetch-clients")
       if (response.ok) {
         const data = await response.json()
         setClients(data)
       } else {
-        throw new Error("Failed to fetch clients")
+        const errorData = await parseApiError(response)
+        throw errorData
       }
     } catch (error) {
-      console.error("Error fetching clients:", error)
-      toast({
-        title: "Error",
-        description: "Failed to load clients. Please try again.",
-        variant: "destructive",
-      })
+      handleError(error, "fetch-clients")
     } finally {
       setLoading(false)
     }

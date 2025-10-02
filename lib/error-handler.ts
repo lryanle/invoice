@@ -99,7 +99,29 @@ export async function handleError(
 ): Promise<NextResponse> {
   const errorId = generateErrorId()
 
-  // Log critical errors only
+  // Import Sentry logger dynamically to avoid circular dependencies
+  const { sentryLogger } = await import("./sentry-logger")
+
+  // Log all errors to Sentry
+  if (error instanceof Error) {
+    await sentryLogger.logSystemError(error, {
+      resource: request?.url,
+      action: request?.method,
+      ipAddress: request?.headers.get("x-forwarded-for") || request?.headers.get("x-real-ip") || "unknown",
+      userAgent: request?.headers.get("user-agent") || undefined,
+      tags: {
+        component: "api",
+        errorType: error instanceof AppError ? "app_error" : "unknown_error",
+        errorCode: error instanceof AppError ? error.code : "UNKNOWN",
+      },
+    }, {
+      errorId,
+      severity: error instanceof AppError ? error.severity : AuditSeverity.MEDIUM,
+      retryable: error instanceof AppError ? error.retryable : false,
+    })
+  }
+
+  // Log critical errors to audit log
   if (error instanceof AppError && error.severity === AuditSeverity.CRITICAL) {
     await logSystem(AuditEventType.SYSTEM_ERROR, {
       errorId,

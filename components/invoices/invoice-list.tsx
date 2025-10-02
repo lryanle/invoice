@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { DeleteInvoiceDialog } from "@/components/invoices/delete-invoice-dialog"
 import { useToast } from "@/hooks/use-toast"
+import { useErrorHandler, fetchWithErrorHandling, parseApiError } from "@/lib/client-error-handler"
 import { FileText, Loader2, Calendar, DollarSign, Download, Edit, Trash2 } from "lucide-react"
 import { SkeletonCard } from "@/components/ui/skeleton"
 import Link from "next/link"
@@ -27,6 +28,7 @@ export function InvoiceList() {
   const [loading, setLoading] = useState(true)
   const [downloadingId, setDownloadingId] = useState<string | null>(null)
   const { toast } = useToast()
+  const { handleError } = useErrorHandler()
 
   useEffect(() => {
     fetchInvoices()
@@ -34,20 +36,16 @@ export function InvoiceList() {
 
   const fetchInvoices = async () => {
     try {
-      const response = await fetch("/api/invoices")
+      const response = await fetchWithErrorHandling("/api/invoices", {}, "fetch-invoices")
       if (response.ok) {
         const data = await response.json()
-        setInvoices(data)
+        setInvoices(data.invoices || data) // Handle both paginated and non-paginated responses
       } else {
-        throw new Error("Failed to fetch invoices")
+        const errorData = await parseApiError(response)
+        throw errorData
       }
     } catch (error) {
-      console.error("Error fetching invoices:", error)
-      toast({
-        title: "Error",
-        description: "Failed to load invoices. Please try again.",
-        variant: "destructive",
-      })
+      handleError(error, "fetch-invoices")
     } finally {
       setLoading(false)
     }

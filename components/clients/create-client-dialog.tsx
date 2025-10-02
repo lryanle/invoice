@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/dialog"
 import { Separator } from "@/components/ui/separator"
 import { useToast } from "@/hooks/use-toast"
+import { useErrorHandler, fetchWithErrorHandling, parseApiError } from "@/lib/client-error-handler"
 import { Loader2, Building, Mail, MapPin } from "lucide-react"
 
 interface ClientFormData {
@@ -41,6 +42,7 @@ export function CreateClientDialog({ children, onClientCreated }: CreateClientDi
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const { toast } = useToast()
+  const { handleError } = useErrorHandler()
   const [formData, setFormData] = useState<ClientFormData>({
     name: "",
     email: "",
@@ -77,13 +79,13 @@ export function CreateClientDialog({ children, onClientCreated }: CreateClientDi
     setLoading(true)
 
     try {
-      const response = await fetch("/api/clients", {
+      const response = await fetchWithErrorHandling("/api/clients", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify(formData),
-      })
+      }, "create-client")
 
       if (response.ok) {
         toast({
@@ -105,15 +107,11 @@ export function CreateClientDialog({ children, onClientCreated }: CreateClientDi
         })
         onClientCreated?.()
       } else {
-        throw new Error("Failed to create client")
+        const errorData = await parseApiError(response)
+        throw errorData
       }
     } catch (error) {
-      console.error("Error creating client:", error)
-      toast({
-        title: "Error",
-        description: "Failed to create client. Please try again.",
-        variant: "destructive",
-      })
+      handleError(error, "create-client")
     } finally {
       setLoading(false)
     }

@@ -15,6 +15,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { useToast } from "@/hooks/use-toast"
+import { useErrorHandler, fetchWithErrorHandling, parseApiError } from "@/lib/client-error-handler"
 import { Loader2 } from "lucide-react"
 
 interface Client {
@@ -30,28 +31,24 @@ interface DeleteClientDialogProps {
 
 export function DeleteClientDialog({ children, client, onClientDeleted }: DeleteClientDialogProps) {
   const [loading, setLoading] = useState(false)
-  const { toast } = useToast()
+  const { handleError } = useErrorHandler()
 
   const handleDelete = async () => {
     setLoading(true)
 
     try {
-      const response = await fetch(`/api/clients/${client._id}`, {
+      const response = await fetchWithErrorHandling(`/api/clients/${client._id}`, {
         method: "DELETE",
-      })
+      }, "delete-client")
 
       if (response.ok) {
         onClientDeleted?.()
       } else {
-        throw new Error("Failed to delete client")
+        const errorData = await parseApiError(response)
+        throw errorData
       }
     } catch (error) {
-      console.error("Error deleting client:", error)
-      toast({
-        title: "Error",
-        description: "Failed to delete client. Please try again.",
-        variant: "destructive",
-      })
+      handleError(error, "delete-client")
     } finally {
       setLoading(false)
     }

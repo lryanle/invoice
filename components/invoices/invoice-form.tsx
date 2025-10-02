@@ -12,6 +12,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { LineItemsSection } from "@/components/invoices/line-items-section"
 import { LiveInvoicePreview } from "@/components/invoices/live-invoice-preview"
 import { useToast } from "@/hooks/use-toast"
+import { useErrorHandler, fetchWithErrorHandling, parseApiError } from "@/lib/client-error-handler"
 import { useRouter } from "next/navigation"
 import { CalendarIcon, Building, FileText, Save, Download, Loader2, Plus } from "lucide-react"
 import { CreateClientDialog } from "@/components/clients/create-client-dialog"
@@ -70,6 +71,7 @@ export function InvoiceForm({ invoiceId }: InvoiceFormProps) {
   const [saving, setSaving] = useState(false)
   const [exporting, setExporting] = useState(false)
   const { toast } = useToast()
+  const { handleError } = useErrorHandler()
   const router = useRouter()
 
   // Date state for calendar components
@@ -137,7 +139,7 @@ export function InvoiceForm({ invoiceId }: InvoiceFormProps) {
   const fetchClients = async () => {
     setLoading(true)
     try {
-      const response = await fetch("/api/clients")
+      const response = await fetchWithErrorHandling("/api/clients", {}, "fetch-clients-invoice-form")
       if (response.ok) {
         const data = await response.json()
         setClients(data)
@@ -146,14 +148,12 @@ export function InvoiceForm({ invoiceId }: InvoiceFormProps) {
         if (!invoiceId) {
           await fetchRecentClient(data)
         }
+      } else {
+        const errorData = await parseApiError(response)
+        throw errorData
       }
     } catch (error) {
-      console.error("Error fetching clients:", error)
-      toast({
-        title: "Error",
-        description: "Failed to load clients. Please try again.",
-        variant: "destructive",
-      })
+      handleError(error, "fetch-clients-invoice-form")
     } finally {
       setLoading(false)
     }

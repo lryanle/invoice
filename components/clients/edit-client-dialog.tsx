@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/dialog"
 import { Separator } from "@/components/ui/separator"
 import { useToast } from "@/hooks/use-toast"
+import { useErrorHandler, fetchWithErrorHandling, parseApiError } from "@/lib/client-error-handler"
 import { Loader2, Building, Mail, MapPin } from "lucide-react"
 
 interface Client {
@@ -39,10 +40,11 @@ interface EditClientDialogProps {
   onClientUpdated?: () => void
 }
 
-export function EditClientDialog({ children, client, onClientUpdated }: EditClientDialogProps) {
+export function EditClientDialog({ children, client, onClientUpdated }: Readonly<EditClientDialogProps>) {
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const { toast } = useToast()
+  const { handleError } = useErrorHandler()
   const [formData, setFormData] = useState({
     name: client.name,
     email: client.email,
@@ -79,13 +81,13 @@ export function EditClientDialog({ children, client, onClientUpdated }: EditClie
     setLoading(true)
 
     try {
-      const response = await fetch(`/api/clients/${client._id}`, {
+      const response = await fetchWithErrorHandling(`/api/clients/${client._id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify(formData),
-      })
+      }, "update-client")
 
       if (response.ok) {
         toast({
@@ -95,15 +97,11 @@ export function EditClientDialog({ children, client, onClientUpdated }: EditClie
         setOpen(false)
         onClientUpdated?.()
       } else {
-        throw new Error("Failed to update client")
+        const errorData = await parseApiError(response)
+        throw errorData
       }
     } catch (error) {
-      console.error("Error updating client:", error)
-      toast({
-        title: "Error",
-        description: "Failed to update client. Please try again.",
-        variant: "destructive",
-      })
+      handleError(error, "update-client")
     } finally {
       setLoading(false)
     }

@@ -11,6 +11,7 @@ import { AuthErrorBoundary } from "@/components/error/auth-error-boundary"
 import { SentryUserContextProvider } from "@/components/error/sentry-user-context"
 import { ErrorBoundaryWrapper } from "@/components/error/error-boundary-wrapper"
 import { getClerkConfig } from "@/lib/clerk-config"
+import { GlobalErrorHandler } from "@/components/error/global-error-handler"
 import "./globals.css"
 
 export const metadata: Metadata = {
@@ -61,16 +62,18 @@ export default function RootLayout({
           sizes="<generated>"
         />
         <body className={`font-sans ${GeistSans.variable} ${GeistMono.variable}`}>
-          <ErrorBoundaryWrapper context="app-layout">
-            <AuthErrorBoundary>
-              <SentryUserContextProvider>
-                <ConditionalNavbar />
-                <Suspense fallback={null}>{children}</Suspense>
-                <Toaster />
-                <Analytics />
-              </SentryUserContextProvider>
-            </AuthErrorBoundary>
-          </ErrorBoundaryWrapper>
+          <GlobalErrorHandler>
+            <ErrorBoundaryWrapper context="app-layout">
+              <AuthErrorBoundary>
+                <SentryUserContextProvider>
+                  <ConditionalNavbar />
+                  <Suspense fallback={null}>{children}</Suspense>
+                  <Toaster />
+                  <Analytics />
+                </SentryUserContextProvider>
+              </AuthErrorBoundary>
+            </ErrorBoundaryWrapper>
+          </GlobalErrorHandler>
         </body>
       </html>
     </ClerkProvider>
