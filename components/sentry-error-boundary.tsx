@@ -77,36 +77,50 @@ class SentryErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBound
   }
 }
 
-function DefaultErrorFallback({ error, resetError }: { error?: Error; resetError: () => void }) {
+function DefaultErrorFallback({ error, resetError }: Readonly<{ error?: Error; resetError: () => void }>) {
   return (
-    <div className="min-h-screen flex items-center justify-center p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-red-100">
-            <AlertTriangle className="h-6 w-6 text-red-600" />
+    <div className="min-h-screen flex items-center justify-center p-4 bg-background">
+      <Card className="w-full max-w-lg border-destructive/20 shadow-lg">
+        <CardHeader className="text-center space-y-4">
+          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-destructive/10 dark:bg-destructive/20">
+            <AlertTriangle className="h-8 w-8 text-destructive" />
           </div>
-          <CardTitle className="text-xl">Something went wrong</CardTitle>
-          <CardDescription>
-            We're sorry, but something unexpected happened. Our team has been notified.
-          </CardDescription>
+          <div className="space-y-2">
+            <CardTitle className="text-2xl font-bold text-foreground">
+              Something went wrong
+            </CardTitle>
+            <CardDescription className="text-base text-muted-foreground max-w-md mx-auto">
+              We're sorry, but something unexpected happened. Our team has been notified and we're working to fix this issue.
+            </CardDescription>
+          </div>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-6">
           {process.env.NODE_ENV === "development" && error && (
-            <div className="rounded-md bg-gray-100 p-3">
-              <p className="text-sm font-medium text-gray-900">Error Details:</p>
-              <p className="text-sm text-gray-700 mt-1">{error.message}</p>
+            <div className="space-y-3">
+              <h4 className="text-sm font-medium text-foreground">Error Details:</h4>
+              <div className="rounded-md bg-muted p-3 max-h-32 overflow-y-auto">
+                <pre className="text-xs text-muted-foreground whitespace-pre-wrap break-words">
+                  {error.message}
+                  {error.stack && `\n\nStack trace:\n${error.stack}`}
+                </pre>
+              </div>
             </div>
           )}
           
-          <div className="flex flex-col space-y-2">
-            <Button onClick={resetError} className="w-full">
+          <div className="flex flex-col sm:flex-row gap-3">
+            <Button 
+              onClick={resetError} 
+              className="flex-1 h-11 text-base font-medium"
+              size="lg"
+            >
               <RefreshCw className="mr-2 h-4 w-4" />
               Try Again
             </Button>
             <Button 
               variant="outline" 
               onClick={() => window.location.href = "/"}
-              className="w-full"
+              className="flex-1 h-11 text-base font-medium"
+              size="lg"
             >
               Go Home
             </Button>

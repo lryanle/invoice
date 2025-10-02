@@ -90,9 +90,9 @@ async function handleRequest(auth: any, req: NextRequest): Promise<NextResponse>
     return handleProtectedRoute(req, userId, sessionId)
   }
   
-  // Handle home page redirects
+  // Handle home page - let client-side logic handle redirects
   if (pathname === "/") {
-    return handleHomePage(req, userId)
+    return NextResponse.next()
   }
   
   // Default: allow the request
@@ -136,13 +136,6 @@ async function handleProtectedRoute(req: NextRequest, userId: string | null, ses
   return NextResponse.next()
 }
 
-async function handleHomePage(req: NextRequest, userId: string | null): Promise<NextResponse> {
-  if (userId) {
-    return NextResponse.redirect(new URL("/dashboard", req.url))
-  }
-  
-  return NextResponse.next()
-}
 
 export const config = {
   matcher: [

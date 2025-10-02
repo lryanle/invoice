@@ -9,6 +9,7 @@ import { Toaster } from "@/components/ui/toaster"
 import { ConditionalNavbar } from "@/components/conditional-navbar"
 import { AuthErrorBoundary } from "@/components/auth-error-boundary"
 import { SentryUserContextProvider } from "@/components/sentry-user-context"
+import { ErrorBoundaryWrapper } from "@/components/error-boundary-wrapper"
 import { getClerkConfig } from "@/lib/clerk-config"
 import "./globals.css"
 
@@ -60,14 +61,16 @@ export default function RootLayout({
           sizes="<generated>"
         />
         <body className={`font-sans ${GeistSans.variable} ${GeistMono.variable}`}>
-          <AuthErrorBoundary>
-            <SentryUserContextProvider>
-              <ConditionalNavbar />
-              <Suspense fallback={null}>{children}</Suspense>
-              <Toaster />
-              <Analytics />
-            </SentryUserContextProvider>
-          </AuthErrorBoundary>
+          <ErrorBoundaryWrapper context="app-layout">
+            <AuthErrorBoundary>
+              <SentryUserContextProvider>
+                <ConditionalNavbar />
+                <Suspense fallback={null}>{children}</Suspense>
+                <Toaster />
+                <Analytics />
+              </SentryUserContextProvider>
+            </AuthErrorBoundary>
+          </ErrorBoundaryWrapper>
         </body>
       </html>
     </ClerkProvider>

@@ -33,10 +33,10 @@ export function AuthErrorBoundary({ children }: AuthErrorBoundaryProps) {
   // Show loading state while auth is loading
   if (!isLoaded) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="flex items-center space-x-2">
-          <RefreshCw className="h-4 w-4 animate-spin" />
-          <span>Loading...</span>
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="flex items-center space-x-3">
+          <RefreshCw className="h-5 w-5 animate-spin text-primary" />
+          <span className="text-foreground font-medium">Loading...</span>
         </div>
       </div>
     )
@@ -49,23 +49,30 @@ export function AuthErrorBoundary({ children }: AuthErrorBoundaryProps) {
     
     if (protectedRoutes.some(route => currentPath.startsWith(route))) {
       return (
-        <div className="min-h-screen flex items-center justify-center p-4">
-          <Card className="w-full max-w-md">
-            <CardHeader className="text-center">
-              <AlertTriangle className="h-12 w-12 text-destructive mx-auto mb-4" />
-              <CardTitle>Authentication Required</CardTitle>
-              <CardDescription>
-                You need to sign in to access this page.
-              </CardDescription>
+        <div className="min-h-screen flex items-center justify-center p-4 bg-background">
+          <Card className="w-full max-w-lg border-destructive/20 shadow-lg">
+            <CardHeader className="text-center space-y-4">
+              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-destructive/10 dark:bg-destructive/20">
+                <AlertTriangle className="h-8 w-8 text-destructive" />
+              </div>
+              <div className="space-y-2">
+                <CardTitle className="text-2xl font-bold text-foreground">
+                  Authentication Required
+                </CardTitle>
+                <CardDescription className="text-base text-muted-foreground max-w-md mx-auto">
+                  You need to sign in to access this page. Please authenticate to continue.
+                </CardDescription>
+              </div>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-6">
               <Button 
                 onClick={() => {
                   const redirectUrl = new URL("/", window.location.origin)
                   redirectUrl.searchParams.set("redirect_url", window.location.href)
                   router.push(redirectUrl.toString())
                 }}
-                className="w-full"
+                className="w-full h-11 text-base font-medium"
+                size="lg"
               >
                 Sign In
               </Button>
