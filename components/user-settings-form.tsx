@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Separator } from "@/components/ui/separator"
 import { useToast } from "@/hooks/use-toast"
+import { useCSRF } from "@/hooks/use-csrf"
 import { Loader2, Save, User, Phone, Mail, MapPin, DollarSign } from "lucide-react"
 
 interface UserProfile {
@@ -41,6 +42,7 @@ const currencies = [
 export function UserSettingsForm() {
   const { user } = useUser()
   const { toast } = useToast()
+  const { getToken } = useCSRF()
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [profile, setProfile] = useState<UserProfile>({
@@ -107,11 +109,19 @@ export function UserSettingsForm() {
     setSaving(true)
 
     try {
+      // Get CSRF token
+      const csrfToken = await getToken()
+      if (!csrfToken) {
+        throw new Error("Failed to get CSRF token")
+      }
+
       const response = await fetch("/api/user/profile", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "x-csrf-token": csrfToken,
         },
+        credentials: "include",
         body: JSON.stringify(profile),
       })
 
@@ -121,13 +131,14 @@ export function UserSettingsForm() {
           description: "Your profile information has been updated successfully.",
         })
       } else {
-        throw new Error("Failed to save profile")
+        const errorData = await response.json()
+        throw new Error(errorData.error || "Failed to save profile")
       }
     } catch (error) {
       console.error("Error saving profile:", error)
       toast({
         title: "Error",
-        description: "Failed to save your settings. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to save your settings. Please try again.",
         variant: "destructive",
       })
     } finally {
