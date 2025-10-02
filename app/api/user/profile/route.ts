@@ -4,7 +4,7 @@ import { DatabaseService } from "@/lib/database"
 
 async function handleGetProfile(request: NextRequest, context: AuthContext) {
   try {
-    const profile = await DatabaseService.getUserProfile(context.userId)
+    const profile = await DatabaseService.getUserProfileByClerkId(context.userId)
     return NextResponse.json(profile)
   } catch (error) {
     console.error("Error fetching user profile:", error)
@@ -24,12 +24,12 @@ async function handleUpdateProfile(request: NextRequest, context: AuthContext) {
       return NextResponse.json({ error: "Full name and email are required" }, { status: 400 })
     }
 
-    // Check if profile exists
-    const existingProfile = await DatabaseService.getUserProfile(context.userId)
+    // Check if profile exists using the new email-based method
+    const existingProfile = await DatabaseService.getUserProfileByClerkId(context.userId)
 
     if (existingProfile) {
       // Update existing profile
-      await DatabaseService.updateUserProfile(context.userId, {
+      await DatabaseService.updateUserProfileByClerkId(context.userId, {
         fullName,
         email,
         phone,
@@ -43,13 +43,18 @@ async function handleUpdateProfile(request: NextRequest, context: AuthContext) {
         },
       })
     } else {
-      // Create new profile
+      // Create new profile - this will automatically get the user's email from Clerk
+      const userEmail = await DatabaseService.getUserEmailFromClerk(context.userId)
+      if (!userEmail) {
+        return NextResponse.json({ error: "Unable to get user email from Clerk" }, { status: 400 })
+      }
+      
       await DatabaseService.createUserProfile({
         clerkUserId: context.userId,
         fullName,
-        email,
+        email: userEmail, // Use the email from Clerk, not the one in the request
         phone,
-        currency: "USD", // Default currency
+        currency: currency || "USD",
         address: address || {
           street1: "",
           city: "",
@@ -60,7 +65,7 @@ async function handleUpdateProfile(request: NextRequest, context: AuthContext) {
       })
     }
 
-    const updatedProfile = await DatabaseService.getUserProfile(context.userId)
+    const updatedProfile = await DatabaseService.getUserProfileByClerkId(context.userId)
     return NextResponse.json(updatedProfile)
   } catch (error) {
     console.error("Error saving user profile:", error)

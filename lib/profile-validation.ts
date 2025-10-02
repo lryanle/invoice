@@ -10,7 +10,7 @@ export async function validateProfileSetup() {
   }
 
   try {
-    const profile = await DatabaseService.getUserProfile(userId)
+    const profile = await DatabaseService.getUserProfileByClerkId(userId)
     const profileComplete = profile && profile.fullName && profile.address?.street1
     
     if (!profileComplete) {
@@ -32,7 +32,7 @@ export async function validateProfileForInvoices() {
   }
 
   try {
-    const profile = await DatabaseService.getUserProfile(userId)
+    const profile = await DatabaseService.getUserProfileByClerkId(userId)
     const profileComplete = profile && profile.fullName && profile.address?.street1
     
     if (!profileComplete) {
@@ -55,7 +55,7 @@ export async function getProfileOrRedirect() {
   }
 
   try {
-    const profile = await DatabaseService.getUserProfile(userId)
+    const profile = await DatabaseService.getUserProfileByClerkId(userId)
     return profile
   } catch (error) {
     console.error("Error fetching profile:", error)

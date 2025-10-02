@@ -1,6 +1,7 @@
 import { getDatabase } from "./mongodb"
 import type { UserProfile, Client, Invoice } from "./models/user"
 import { ObjectId, type Db } from "mongodb"
+import { clerkClient } from "@clerk/nextjs/server"
 
 // Type aliases for better readability
 type UserProfileInput = Omit<UserProfile, "_id" | "createdAt" | "updatedAt">
@@ -19,6 +20,18 @@ export class DatabaseService {
     return this.dbInstance
   }
 
+  // Helper function to get user email from Clerk
+  static async getUserEmailFromClerk(clerkUserId: string): Promise<string | null> {
+    try {
+      const client = await clerkClient()
+      const user = await client.users.getUser(clerkUserId)
+      return user.emailAddresses[0]?.emailAddress || null
+    } catch (error) {
+      console.error("Error getting user email from Clerk:", error)
+      return null
+    }
+  }
+
   // User Profile Operations
   static async createUserProfile(profile: UserProfileInput) {
     const db = await this.getDb()
@@ -33,9 +46,23 @@ export class DatabaseService {
     return result.insertedId
   }
 
+  static async getUserProfileByEmail(email: string) {
+    const db = await this.getDb()
+    return await db.collection<UserProfile>("users").findOne({ email })
+  }
+
   static async getUserProfile(clerkUserId: string) {
     const db = await this.getDb()
     return await db.collection<UserProfile>("users").findOne({ clerkUserId })
+  }
+
+  static async updateUserProfileByEmail(email: string, updates: Partial<UserProfile>) {
+    const db = await this.getDb()
+    const now = new Date()
+
+    return await db
+      .collection<UserProfile>("users")
+      .updateOne({ email }, { $set: { ...updates, updatedAt: now } })
   }
 
   static async updateUserProfile(clerkUserId: string, updates: Partial<UserProfile>) {
@@ -45,6 +72,87 @@ export class DatabaseService {
     return await db
       .collection<UserProfile>("users")
       .updateOne({ clerkUserId }, { $set: { ...updates, updatedAt: now } })
+  }
+
+  // Get or create user profile by email, updating clerkUserId if it has changed
+  static async getOrCreateUserProfileByEmail(email: string, clerkUserId: string, additionalData?: Partial<UserProfile>) {
+    const db = await this.getDb()
+    const now = new Date()
+
+    // First, try to find user by email
+    let user = await db.collection<UserProfile>("users").findOne({ email })
+
+    if (user) {
+      // User exists, check if clerkUserId has changed
+      if (user.clerkUserId !== clerkUserId) {
+        // Update the clerkUserId
+        await db.collection<UserProfile>("users").updateOne(
+          { email },
+          { $set: { clerkUserId, updatedAt: now } }
+        )
+        user.clerkUserId = clerkUserId
+        user.updatedAt = now
+      }
+      return user
+    }
+
+    // User doesn't exist, check if there's a user with the same clerkUserId
+    const existingUserByClerkId = await db.collection<UserProfile>("users").findOne({ clerkUserId })
+    if (existingUserByClerkId) {
+      // Update the existing user's email
+      await db.collection<UserProfile>("users").updateOne(
+        { clerkUserId },
+        { $set: { email, updatedAt: now } }
+      )
+      existingUserByClerkId.email = email
+      existingUserByClerkId.updatedAt = now
+      return existingUserByClerkId
+    }
+
+    // Create new user profile
+    const newProfile: UserProfile = {
+      clerkUserId,
+      email,
+      fullName: additionalData?.fullName || "",
+      phone: additionalData?.phone,
+      currency: additionalData?.currency || "USD",
+      address: additionalData?.address || {
+        street1: "",
+        city: "",
+        state: "",
+        zip: "",
+        country: ""
+      },
+      createdAt: now,
+      updatedAt: now,
+    }
+
+    const result = await db.collection<UserProfile>("users").insertOne(newProfile)
+    return { ...newProfile, _id: result.insertedId }
+  }
+
+  // Get user profile by clerkUserId, but use email as the primary identifier
+  static async getUserProfileByClerkId(clerkUserId: string) {
+    // First get the user's email from Clerk
+    const email = await this.getUserEmailFromClerk(clerkUserId)
+    if (!email) {
+      return null
+    }
+
+    // Use the email-based lookup
+    return await this.getOrCreateUserProfileByEmail(email, clerkUserId)
+  }
+
+  // Update user profile by clerkUserId, but use email as the primary identifier
+  static async updateUserProfileByClerkId(clerkUserId: string, updates: Partial<UserProfile>) {
+    // First get the user's email from Clerk
+    const email = await this.getUserEmailFromClerk(clerkUserId)
+    if (!email) {
+      throw new Error("User not found in Clerk")
+    }
+
+    // Use the email-based update
+    return await this.updateUserProfileByEmail(email, updates)
   }
 
   // Client Operations
