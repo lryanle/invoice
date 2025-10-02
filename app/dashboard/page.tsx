@@ -51,10 +51,10 @@ export default function DashboardPage() {
       }
 
       // Fetch recent invoices
-      const invoicesResponse = await fetch("/api/invoices?limit=5")
+      const invoicesResponse = await fetch("/api/invoices?page=1&limit=5")
       if (invoicesResponse.ok) {
         const invoicesData = await invoicesResponse.json()
-        setRecentInvoices(invoicesData)
+        setRecentInvoices(invoicesData.invoices)
       }
 
       // Fetch clients
@@ -283,10 +283,12 @@ export default function DashboardPage() {
                               <FileText className="h-4 w-4" />
                               {`Invoice #${invoice.invoiceNumber}`}
                             </div>
-                            <div className="flex items-center gap-2 text-muted-foreground">
-                            <Notebook className="h-4 w-4" />
-                              {invoice.customerRef || ""}
-                            </div>
+                            {invoice.customerRef && (
+                              <div className="flex items-center gap-2 text-muted-foreground">
+                                <Notebook className="h-4 w-4" />
+                                {invoice.customerRef}
+                              </div>
+                            )}
                           </div>
                           <div className="flex items-center gap-4">
                             <div className="text-right">
