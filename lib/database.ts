@@ -2,6 +2,11 @@ import { getDatabase } from "./mongodb"
 import type { UserProfile, Client, Invoice } from "./models/user"
 import { ObjectId, type Db } from "mongodb"
 
+// Type aliases for better readability
+type UserProfileInput = Omit<UserProfile, "_id" | "createdAt" | "updatedAt">
+type ClientInput = Omit<Client, "_id" | "createdAt" | "updatedAt">
+type InvoiceInput = Omit<Invoice, "_id" | "createdAt" | "updatedAt">
+
 export async function connectToDatabase() {
   return await getDatabase()
 }
@@ -15,7 +20,7 @@ export class DatabaseService {
   }
 
   // User Profile Operations
-  static async createUserProfile(profile: Omit<UserProfile, "_id" | "createdAt" | "updatedAt">) {
+  static async createUserProfile(profile: UserProfileInput) {
     const db = await this.getDb()
     const now = new Date()
 
@@ -43,7 +48,7 @@ export class DatabaseService {
   }
 
   // Client Operations
-  static async createClient(client: Omit<Client, "_id" | "createdAt" | "updatedAt">) {
+  static async createClient(client: ClientInput) {
     const db = await this.getDb()
     const now = new Date()
 
@@ -81,7 +86,7 @@ export class DatabaseService {
   }
 
   // Invoice Operations
-  static async createInvoice(invoice: Omit<Invoice, "_id" | "createdAt" | "updatedAt">) {
+  static async createInvoice(invoice: InvoiceInput) {
     const db = await this.getDb()
     const now = new Date()
 

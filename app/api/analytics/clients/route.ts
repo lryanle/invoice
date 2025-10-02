@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url)
     const clientIdParam = searchParams.get("clientId")
-    const clientId = clientIdParam === "all" ? undefined : clientIdParam
+    const clientId = clientIdParam === "all" ? undefined : clientIdParam || undefined
 
     const analytics = await DatabaseService.getClientAnalytics(userId, clientId)
 

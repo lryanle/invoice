@@ -54,7 +54,7 @@ interface ClientAnalyticsData {
 
 const COLORS = ["#3b82f6", "#ef4444", "#22c55e", "#f59e0b", "#8b5cf6", "#06b6d4", "#f97316"]
 
-export function ClientAnalytics({ clientId }: ClientAnalyticsProps) {
+export function ClientAnalytics({ clientId }: Readonly<ClientAnalyticsProps>) {
   const [data, setData] = useState<ClientAnalyticsData | null>(null)
   const [loading, setLoading] = useState(true)
 
@@ -216,13 +216,13 @@ export function ClientAnalytics({ clientId }: ClientAnalyticsProps) {
                       cx="50%"
                       cy="50%"
                       labelLine={false}
-                      label={({ _id, totalRevenue }) => `${_id}: $${totalRevenue.toFixed(0)}`}
+                      label={(props: any) => `${props._id}: $${props.totalRevenue.toFixed(0)}`}
                       outerRadius={80}
                       fill="#8884d8"
                       dataKey="totalRevenue"
                     >
                       {data.lineItemBreakdown.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                        <Cell key={`cell-${entry._id}-${index}`} fill={COLORS[index % COLORS.length]} />
                       ))}
                     </Pie>
                     <ChartTooltip content={<ChartTooltipContent />} />
