@@ -22,7 +22,6 @@ export const ROUTE_PATTERNS = {
     "/api/invoices", 
     "/api/analytics",
     "/api/dashboard",
-    "/api/csrf-token",
   ],
 } as const
 
