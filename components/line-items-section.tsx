@@ -117,12 +117,6 @@ export function LineItemsSection({ lineItems, onLineItemsChange }: LineItemsSect
       // Auto-select the newly created item
       updateLineItem(itemIndex, "name", itemName)
       
-      // Optionally, you could also save this to the backend here
-      // await fetch("/api/line-items/suggestions", {
-      //   method: "POST",
-      //   headers: { "Content-Type": "application/json" },
-      //   body: JSON.stringify({ name: itemName })
-      // })
     } catch (error) {
       console.error("Error creating new item:", error)
     }

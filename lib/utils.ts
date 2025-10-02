@@ -8,8 +8,8 @@ export function cn(...inputs: ClassValue[]) {
 export function formatClientNameForFilename(clientName: string): string {
   return clientName
     .toLowerCase()
-    .replace(/[^a-z0-9\s]/g, '') // Remove special characters
-    .replace(/\s+/g, '-') // Replace spaces with dashes
-    .replace(/-+/g, '-') // Replace multiple dashes with single dash
-    .replace(/^(-|$)/g, '') // Remove leading/trailing dashes
+    .replace(/[^a-z0-9\s]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^(-|$)/g, '')
 }
