@@ -40,6 +40,9 @@ export default function RootLayout({
           footerActionLink: "text-primary hover:text-primary/80",
         },
       }}
+      // Use new redirect props instead of deprecated ones
+      signInFallbackRedirectUrl="/dashboard"
+      signUpFallbackRedirectUrl="/dashboard"
     >
       <html lang="en">
         <link rel="icon" href="/favicon.ico" sizes="any" />

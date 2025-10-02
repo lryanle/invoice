@@ -1,7 +1,22 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server"
-import { NextResponse } from "next/server"
+import { NextRequest, NextResponse } from "next/server"
+import { 
+  applySecurityHeaders, 
+  checkRateLimit
+} from "@/lib/security"
+import { 
+  isPublicAPIRoute, 
+  isProtectedAPIRoute 
+} from "@/lib/auth-guards"
 
-const isProtectedRoute = createRouteMatcher([
+// Enhanced route matching with more granular control
+const isPublicRouteMatcher = createRouteMatcher([
+  "/",
+  "/api/webhooks(.*)",
+  "/api/health"
+])
+
+const isProtectedRouteMatcher = createRouteMatcher([
   "/dashboard(.*)", 
   "/settings(.*)", 
   "/clients(.*)", 
@@ -9,37 +24,109 @@ const isProtectedRoute = createRouteMatcher([
   "/analytics(.*)"
 ])
 
-const isPublicRoute = createRouteMatcher([
-  "/",
-  "/api/webhooks(.*)",
-  "/api/health"
-])
-
 export default clerkMiddleware(async (auth, req) => {
-  const { userId } = await auth()
+  try {
+    const response = await handleRequest(auth, req)
+    return applySecurityHeaders(response)
+  } catch (error) {
+    console.error("Middleware error:", error)
+    const errorResponse = NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    )
+    return applySecurityHeaders(errorResponse)
+  }
+})
+
+async function handleRequest(auth: any, req: NextRequest): Promise<NextResponse> {
+  const { userId, sessionId } = await auth()
+  const pathname = req.nextUrl.pathname
   
-  // Allow public routes to pass through
-  if (isPublicRoute(req)) {
+  // Handle CORS preflight requests
+  if (req.method === "OPTIONS") {
+    const response = new NextResponse(null, { status: 200 })
+    return applySecurityHeaders(response)
+  }
+  
+  // Rate limiting for all requests
+  const rateLimitResult = checkRateLimit(req)
+  if (!rateLimitResult.allowed) {
+    return NextResponse.json(
+      { error: "Rate limit exceeded" },
+      { status: 429 }
+    )
+  }
+  
+  const response = NextResponse.next()
+  
+  // Handle public routes
+  if (isPublicRouteMatcher(req)) {
+    return response
+  }
+  
+  // Handle API routes
+  if (pathname.startsWith("/api/")) {
+    return handleAPIRoute(req, userId, sessionId)
+  }
+  
+  // Handle protected routes
+  if (isProtectedRouteMatcher(req)) {
+    return handleProtectedRoute(req, userId, sessionId)
+  }
+  
+  // Handle home page redirects
+  if (pathname === "/") {
+    return handleHomePage(req, userId)
+  }
+  
+  // Default: allow the request
+  return response
+}
+
+async function handleAPIRoute(req: NextRequest, userId: string | null, sessionId: string | null): Promise<NextResponse> {
+  const pathname = req.nextUrl.pathname
+  
+  // Public API routes
+  if (isPublicAPIRoute(pathname)) {
     return NextResponse.next()
   }
   
-  // If user is not logged in and trying to access protected routes, redirect to home
-  if (isProtectedRoute(req) && !userId) {
+  // Protected API routes
+  if (isProtectedAPIRoute(pathname)) {
+    if (!userId) {
+      return NextResponse.json(
+        { error: "Authentication required" },
+        { status: 401 }
+      )
+    }
+    
+    return NextResponse.next()
+  }
+  
+  // Unknown API route - deny by default
+  return NextResponse.json(
+    { error: "Route not found" },
+    { status: 404 }
+  )
+}
+
+async function handleProtectedRoute(req: NextRequest, userId: string | null, sessionId: string | null): Promise<NextResponse> {
+  if (!userId) {
     const signInUrl = new URL("/", req.url)
     signInUrl.searchParams.set("redirect_url", req.url)
     return NextResponse.redirect(signInUrl)
   }
   
-  // If user is logged in and trying to access home page, redirect to dashboard
-  if (req.nextUrl.pathname === "/" && userId) {
+  return NextResponse.next()
+}
+
+async function handleHomePage(req: NextRequest, userId: string | null): Promise<NextResponse> {
+  if (userId) {
     return NextResponse.redirect(new URL("/dashboard", req.url))
   }
   
-  // For API routes, ensure user is authenticated
-  if (req.nextUrl.pathname.startsWith("/api/") && !isPublicRoute(req) && !userId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  }
-})
+  return NextResponse.next()
+}
 
 export const config = {
   matcher: [

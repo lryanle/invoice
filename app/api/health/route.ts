@@ -1,16 +1,18 @@
-import { NextResponse } from "next/server"
+import { NextRequest, NextResponse } from "next/server"
+import { withPublicAPI } from "@/lib/auth-guards"
+import { getClerkConfig } from "@/lib/clerk-config"
 
-export async function GET() {
+async function handleHealthCheck(request: NextRequest) {
   try {
-    // Basic health check
+    const clerkConfig = getClerkConfig()
+    
     const health = {
       status: "healthy",
       timestamp: new Date().toISOString(),
       environment: process.env.NODE_ENV,
       clerk: {
-        publishableKey: !!process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY,
-        secretKey: !!process.env.CLERK_SECRET_KEY,
-      },
+        configured: !!(clerkConfig.publishableKey && clerkConfig.secretKey),
+      }
     }
 
     return NextResponse.json(health)
@@ -25,3 +27,5 @@ export async function GET() {
     )
   }
 }
+
+export const GET = withPublicAPI(handleHealthCheck, { rateLimit: false })

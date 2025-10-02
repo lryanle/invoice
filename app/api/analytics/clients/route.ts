@@ -11,9 +11,10 @@ export async function GET(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url)
-    const clientId = searchParams.get("clientId")
+    const clientIdParam = searchParams.get("clientId")
+    const clientId = clientIdParam === "all" ? undefined : clientIdParam
 
-    const analytics = await DatabaseService.getClientAnalytics(userId, clientId || undefined)
+    const analytics = await DatabaseService.getClientAnalytics(userId, clientId)
 
     if (clientId && !analytics) {
       return NextResponse.json({ error: "Client not found" }, { status: 404 })

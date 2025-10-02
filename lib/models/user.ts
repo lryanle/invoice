@@ -6,7 +6,7 @@ export interface UserProfile {
   email: string
   fullName: string
   phone?: string
-  currency: string // Added currency field for multi-currency support
+  currency: string
   address: {
     street1: string
     street2?: string
@@ -21,10 +21,10 @@ export interface UserProfile {
 
 export interface Client {
   _id?: ObjectId
-  userId: string // Clerk user ID
+  userId: string
   name: string
   email: string
-  invoiceCounter: number // Added invoice counter for auto-incrementing invoice numbers
+  invoiceCounter: number
   address: {
     street1: string
     street2?: string
@@ -47,12 +47,12 @@ export interface LineItem {
 
 export interface Invoice {
   _id?: ObjectId
-  userId: string // Clerk user ID
-  clientId: string // Client ObjectId as string
+  userId: string
+  clientId: string
   invoiceNumber: string
   date: Date
   dueDate: Date
-  customerRef?: string // Customer reference field
+  customerRef?: string
   lineItems: LineItem[]
   subtotal: number
   tax?: number

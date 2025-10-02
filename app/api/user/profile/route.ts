@@ -1,16 +1,10 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { auth } from "@clerk/nextjs/server"
+import { withAuth, AuthContext } from "@/lib/auth-guards"
 import { DatabaseService } from "@/lib/database"
 
-export async function GET() {
+async function handleGetProfile(request: NextRequest, context: AuthContext) {
   try {
-    const { userId } = await auth()
-
-    if (!userId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
-
-    const profile = await DatabaseService.getUserProfile(userId)
+    const profile = await DatabaseService.getUserProfile(context.userId)
     return NextResponse.json(profile)
   } catch (error) {
     console.error("Error fetching user profile:", error)
@@ -18,43 +12,60 @@ export async function GET() {
   }
 }
 
-export async function POST(request: NextRequest) {
-  try {
-    const { userId } = await auth()
+export const GET = withAuth(handleGetProfile)
 
-    if (!userId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+async function handleUpdateProfile(request: NextRequest, context: AuthContext) {
+  try {
+    const body = await request.json()
+    const { fullName, email, phone, address, currency } = body
+
+    // Validate input
+    if (!fullName || !email) {
+      return NextResponse.json({ error: "Full name and email are required" }, { status: 400 })
     }
 
-    const body = await request.json()
-    const { fullName, email, phone, address } = body
-
     // Check if profile exists
-    const existingProfile = await DatabaseService.getUserProfile(userId)
+    const existingProfile = await DatabaseService.getUserProfile(context.userId)
 
     if (existingProfile) {
       // Update existing profile
-      await DatabaseService.updateUserProfile(userId, {
+      await DatabaseService.updateUserProfile(context.userId, {
         fullName,
         email,
         phone,
-        address,
+        currency: currency || "USD",
+        address: address || {
+          street1: "",
+          city: "",
+          state: "",
+          zipCode: "",
+          country: ""
+        },
       })
     } else {
       // Create new profile
       await DatabaseService.createUserProfile({
-        clerkUserId: userId,
+        clerkUserId: context.userId,
         fullName,
         email,
         phone,
-        address,
+        currency: "USD", // Default currency
+        address: address || {
+          street1: "",
+          city: "",
+          state: "",
+          zipCode: "",
+          country: ""
+        },
       })
     }
 
-    const updatedProfile = await DatabaseService.getUserProfile(userId)
+    const updatedProfile = await DatabaseService.getUserProfile(context.userId)
     return NextResponse.json(updatedProfile)
   } catch (error) {
     console.error("Error saving user profile:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }
+
+export const POST = withAuth(handleUpdateProfile, { requireCSRF: true })

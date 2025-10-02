@@ -8,7 +8,6 @@ import {
   XAxis,
   YAxis,
   CartesianGrid,
-  ResponsiveContainer,
   PieChart,
   Pie,
   Cell,
@@ -160,23 +159,21 @@ export function UserAnalytics() {
             }}
             className="h-[300px]"
           >
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={data.monthlyRevenue}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="month" />
-                <YAxis yAxisId="left" />
-                <YAxis yAxisId="right" orientation="right" />
-                <ChartTooltip content={<ChartTooltipContent />} />
-                <Line yAxisId="left" type="monotone" dataKey="revenue" stroke="var(--color-revenue)" strokeWidth={2} />
-                <Line
-                  yAxisId="right"
-                  type="monotone"
-                  dataKey="invoiceCount"
-                  stroke="var(--color-invoiceCount)"
-                  strokeWidth={2}
-                />
-              </LineChart>
-            </ResponsiveContainer>
+            <LineChart data={data.monthlyRevenue} width={533} height={300}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="month" />
+              <YAxis yAxisId="left" />
+              <YAxis yAxisId="right" orientation="right" />
+              <ChartTooltip content={<ChartTooltipContent />} />
+              <Line yAxisId="left" type="monotone" dataKey="revenue" stroke="var(--color-revenue)" strokeWidth={2} />
+              <Line
+                yAxisId="right"
+                type="monotone"
+                dataKey="invoiceCount"
+                stroke="var(--color-invoiceCount)"
+                strokeWidth={2}
+              />
+            </LineChart>
           </ChartContainer>
         </CardContent>
       </Card>
@@ -195,25 +192,23 @@ export function UserAnalytics() {
               }}
               className="h-[250px]"
             >
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={data.statusDistribution}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    label={({ _id, count }) => `${_id}: ${count}`}
-                    outerRadius={80}
-                    fill="#8884d8"
-                    dataKey="count"
-                  >
-                    {data.statusDistribution.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <ChartTooltip content={<ChartTooltipContent />} />
-                </PieChart>
-              </ResponsiveContainer>
+              <PieChart width={444} height={250}>
+                <Pie
+                  data={data.statusDistribution}
+                  cx="50%"
+                  cy="50%"
+                  labelLine={false}
+                  label={({ _id, count }) => `${_id}: ${count}`}
+                  outerRadius={80}
+                  fill="#8884d8"
+                  dataKey="count"
+                >
+                  {data.statusDistribution.map((entry, index) => (
+                    <Cell key={`cell-${entry._id}-${index}`} fill={COLORS[index % COLORS.length]} />
+                  ))}
+                </Pie>
+                <ChartTooltip content={<ChartTooltipContent />} />
+              </PieChart>
             </ChartContainer>
           </CardContent>
         </Card>
@@ -231,15 +226,13 @@ export function UserAnalytics() {
               }}
               className="h-[250px]"
             >
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={data.topLineItems.slice(0, 5)} layout="horizontal">
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis type="number" />
-                  <YAxis dataKey="_id" type="category" width={100} />
-                  <ChartTooltip content={<ChartTooltipContent />} />
-                  <Bar dataKey="count" fill="var(--color-count)" />
-                </BarChart>
-              </ResponsiveContainer>
+              <BarChart data={data.topLineItems.slice(0, 5)} layout="horizontal" width={444} height={250}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis type="number" />
+                <YAxis dataKey="_id" type="category" width={100} />
+                <ChartTooltip content={<ChartTooltipContent />} />
+                <Bar dataKey="count" fill="var(--color-count)" />
+              </BarChart>
             </ChartContainer>
           </CardContent>
         </Card>
@@ -259,15 +252,13 @@ export function UserAnalytics() {
             }}
             className="h-[200px]"
           >
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={data.recentActivity}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="_id" />
-                <YAxis />
-                <ChartTooltip content={<ChartTooltipContent />} />
-                <Bar dataKey="invoiceCount" fill="var(--color-invoiceCount)" />
-              </BarChart>
-            </ResponsiveContainer>
+            <BarChart data={data.recentActivity} width={356} height={200}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="_id" />
+              <YAxis />
+              <ChartTooltip content={<ChartTooltipContent />} />
+              <Bar dataKey="invoiceCount" fill="var(--color-invoiceCount)" />
+            </BarChart>
           </ChartContainer>
         </CardContent>
       </Card>
