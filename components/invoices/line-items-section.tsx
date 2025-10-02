@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Plus, Package, X } from "lucide-react"
 import { CreatableCombobox } from "@/components/ui/combobox-createable"
+import { useErrorHandler, fetchWithErrorHandling, parseApiError } from "@/lib/client-error-handler"
 
 interface LineItem {
   name: string
@@ -30,6 +31,7 @@ interface LineItemSuggestion {
 
 export function LineItemsSection({ lineItems, onLineItemsChange }: LineItemsSectionProps) {
   const [suggestions, setSuggestions] = useState<LineItemSuggestion[]>([])
+  const { handleError } = useErrorHandler()
 
   useEffect(() => {
     fetchSuggestions()
@@ -37,27 +39,37 @@ export function LineItemsSection({ lineItems, onLineItemsChange }: LineItemsSect
 
   const fetchSuggestions = async () => {
     try {
-      const response = await fetch("/api/line-items/suggestions")
+      const response = await fetchWithErrorHandling("/api/line-items/suggestions", {}, "fetch-line-item-suggestions")
       if (response.ok) {
         const data = await response.json()
         setSuggestions(data)
+      } else {
+        const errorData = await parseApiError(response)
+        throw errorData
       }
     } catch (error) {
-      console.error("Error fetching line item suggestions:", error)
+      handleError(error, "fetch-line-item-suggestions")
     }
   }
 
   const fetchRecentCost = async (itemName: string) => {
     try {
-      const response = await fetch(`/api/line-items/recent-cost?itemName=${encodeURIComponent(itemName)}`)
+      const response = await fetchWithErrorHandling(
+        `/api/line-items/recent-cost?itemName=${encodeURIComponent(itemName)}`, 
+        {}, 
+        "fetch-recent-cost"
+      )
       if (response.ok) {
         const data = await response.json()
         return data.recentCost || 0
+      } else {
+        const errorData = await parseApiError(response)
+        throw errorData
       }
     } catch (error) {
-      console.error("Error fetching recent cost:", error)
+      handleError(error, "fetch-recent-cost")
+      return 0
     }
-    return 0
   }
 
   const updateLineItem = (index: number, field: keyof LineItem, value: string | number) => {

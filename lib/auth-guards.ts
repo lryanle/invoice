@@ -22,6 +22,7 @@ export const ROUTE_PATTERNS = {
     "/api/invoices", 
     "/api/analytics",
     "/api/dashboard",
+    "/api/line-items",
   ],
 } as const
 
