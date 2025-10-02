@@ -10,12 +10,19 @@ async function handleGetInvoices(request: NextRequest) {
     throw createError.unauthorized("Authentication required to access invoices")
   }
 
+  // Get user profile using email-based lookup to ensure clerkUserId is up to date
+  const userProfile = await DatabaseService.getUserProfileByClerkId(userId)
+  if (!userProfile) {
+    throw createError.unauthorized("User profile not found")
+  }
+
   const { searchParams } = new URL(request.url)
   const page = parseInt(searchParams.get('page') || '1')
   const limit = parseInt(searchParams.get('limit') || '10')
   const offset = (page - 1) * limit
 
-  const { invoices, totalCount } = await DatabaseService.getInvoicesByUserPaginated(userId, offset, limit)
+  // Use the user's email as the primary identifier for invoice operations
+  const { invoices, totalCount } = await DatabaseService.getInvoicesByUserPaginated(userProfile.email, offset, limit)
   
   return NextResponse.json({
     invoices,
@@ -39,6 +46,12 @@ async function handleCreateInvoice(request: NextRequest) {
     throw createError.unauthorized("Authentication required to create invoices")
   }
 
+  // Get user profile using email-based lookup to ensure clerkUserId is up to date
+  const userProfile = await DatabaseService.getUserProfileByClerkId(userId)
+  if (!userProfile) {
+    throw createError.unauthorized("User profile not found")
+  }
+
   const body = await request.json()
   const { clientId, date, dueDate, customerRef, invoiceNumber, lineItems, tax, notes, status = "draft" } = body
 
@@ -59,10 +72,10 @@ async function handleCreateInvoice(request: NextRequest) {
   const total = subtotal + (tax || 0)
 
   // Use provided invoice number or generate next number for client
-  const finalInvoiceNumber = invoiceNumber || await DatabaseService.generateInvoiceNumber(userId, clientId)
+  const finalInvoiceNumber = invoiceNumber || await DatabaseService.generateInvoiceNumber(userProfile.email, clientId)
 
   const invoiceId = await DatabaseService.createInvoice({
-    userId,
+    userId: userProfile.email,
     clientId,
     invoiceNumber: finalInvoiceNumber,
     date: new Date(date),

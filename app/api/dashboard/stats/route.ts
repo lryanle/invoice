@@ -10,10 +10,16 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    // Get all invoices and clients for the user
+    // Get user profile using email-based lookup to ensure clerkUserId is up to date
+    const userProfile = await DatabaseService.getUserProfileByClerkId(userId)
+    if (!userProfile) {
+      return NextResponse.json({ error: "User profile not found" }, { status: 404 })
+    }
+
+    // Get all invoices and clients for the user using email as the primary identifier
     const [invoices, clients] = await Promise.all([
-      DatabaseService.getInvoicesByUser(userId),
-      DatabaseService.getClientsByUser(userId)
+      DatabaseService.getInvoicesByUser(userProfile.email),
+      DatabaseService.getClientsByUser(userProfile.email)
     ])
 
     const totalInvoices = invoices.length
