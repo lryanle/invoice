@@ -20,6 +20,15 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 import { DeleteInvoiceDialog } from "@/components/delete-invoice-dialog";
 import { DateRangeFilter, DateRangeFilterValue } from "@/components/date-range-filter";
 import { AmountFilter, AmountFilterValue } from "@/components/amount-filter";
@@ -55,6 +64,15 @@ interface Client {
   name: string;
 }
 
+interface PaginationInfo {
+  page: number;
+  limit: number;
+  totalCount: number;
+  totalPages: number;
+  hasNextPage: boolean;
+  hasPrevPage: boolean;
+}
+
 export function InvoicesPageClient() {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
@@ -79,26 +97,38 @@ export function InvoicesPageClient() {
     operator: "equal",
     amount: null,
   });
+  const [pagination, setPagination] = useState<PaginationInfo>({
+    page: 1,
+    limit: 10,
+    totalCount: 0,
+    totalPages: 0,
+    hasNextPage: false,
+    hasPrevPage: false,
+  });
   const { toast } = useToast();
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [pagination.page]);
 
   const fetchData = async () => {
     try {
-      // Fetch invoices
-      const invoicesResponse = await fetch("/api/invoices");
+      setLoading(true);
+      // Fetch invoices with pagination
+      const invoicesResponse = await fetch(`/api/invoices?page=${pagination.page}&limit=${pagination.limit}`);
       if (invoicesResponse.ok) {
         const invoicesData = await invoicesResponse.json();
-        setInvoices(invoicesData);
+        setInvoices(invoicesData.invoices);
+        setPagination(invoicesData.pagination);
       }
 
-      // Fetch clients
-      const clientsResponse = await fetch("/api/clients");
-      if (clientsResponse.ok) {
-        const clientsData = await clientsResponse.json();
-        setClients(clientsData);
+      // Fetch clients (only once)
+      if (clients.length === 0) {
+        const clientsResponse = await fetch("/api/clients");
+        if (clientsResponse.ok) {
+          const clientsData = await clientsResponse.json();
+          setClients(clientsData);
+        }
       }
     } catch (error) {
       console.error("Error fetching data:", error);
@@ -162,6 +192,15 @@ export function InvoicesPageClient() {
     });
   };
 
+  const handlePageChange = (newPage: number) => {
+    setPagination(prev => ({ ...prev, page: newPage }));
+  };
+
+  const handleFiltersChange = () => {
+    // Reset to first page when filters change
+    setPagination(prev => ({ ...prev, page: 1 }));
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case "draft":
@@ -223,22 +262,25 @@ export function InvoicesPageClient() {
     }
   };
 
-  const filteredInvoices = invoices.filter((invoice) => {
-    const clientName = getClientName(invoice.clientId);
-    const matchesSearch =
-      invoice.invoiceNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      clientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      invoice.customerRef?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus =
-      statusFilter === "all" || invoice.status === statusFilter;
-    const matchesClient =
-      clientFilter === "all" || invoice.clientId === clientFilter;
-    const matchesDate = matchesDateFilter(invoice.date, dateFilter);
-    const matchesDueDate = matchesDateFilter(invoice.dueDate, dueDateFilter);
-    const matchesAmount = matchesAmountFilter(invoice.total, amountFilter);
+  // For now, we'll do client-side filtering on the paginated results
+  // In a production app, you'd want to move this to server-side filtering
+  const filteredInvoices = invoices
+    .filter((invoice) => {
+      const clientName = getClientName(invoice.clientId);
+      const matchesSearch =
+        invoice.invoiceNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        clientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        invoice.customerRef?.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesStatus =
+        statusFilter === "all" || invoice.status === statusFilter;
+      const matchesClient =
+        clientFilter === "all" || invoice.clientId === clientFilter;
+      const matchesDate = matchesDateFilter(invoice.date, dateFilter);
+      const matchesDueDate = matchesDateFilter(invoice.dueDate, dueDateFilter);
+      const matchesAmount = matchesAmountFilter(invoice.total, amountFilter);
 
-    return matchesSearch && matchesStatus && matchesClient && matchesDate && matchesDueDate && matchesAmount;
-  });
+      return matchesSearch && matchesStatus && matchesClient && matchesDate && matchesDueDate && matchesAmount;
+    });
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("en-US", {
@@ -409,13 +451,19 @@ export function InvoicesPageClient() {
                       <Input
                         placeholder="Search invoices..."
                         value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
+                        onChange={(e) => {
+                          setSearchTerm(e.target.value);
+                          handleFiltersChange();
+                        }}
                         className="pl-10"
                       />
                     </div>
                   </div>
 
-                  <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <Select value={statusFilter} onValueChange={(value) => {
+                    setStatusFilter(value);
+                    handleFiltersChange();
+                  }}>
                     <SelectTrigger className="w-48">
                       <SelectValue placeholder="Filter by status" />
                     </SelectTrigger>
@@ -426,7 +474,10 @@ export function InvoicesPageClient() {
                     </SelectContent>
                   </Select>
 
-                  <Select value={clientFilter} onValueChange={setClientFilter}>
+                  <Select value={clientFilter} onValueChange={(value) => {
+                    setClientFilter(value);
+                    handleFiltersChange();
+                  }}>
                     <SelectTrigger className="w-48">
                       <SelectValue placeholder="Filter by client" />
                     </SelectTrigger>
@@ -447,7 +498,10 @@ export function InvoicesPageClient() {
                     <label htmlFor="invoice-date-filter" className="text-sm font-medium">Invoice Date</label>
                     <DateRangeFilter
                       value={dateFilter}
-                      onChange={setDateFilter}
+                      onChange={(value) => {
+                        setDateFilter(value);
+                        handleFiltersChange();
+                      }}
                       placeholder="Filter by invoice date"
                     />
                   </div>
@@ -456,7 +510,10 @@ export function InvoicesPageClient() {
                     <label htmlFor="due-date-filter" className="text-sm font-medium">Due Date</label>
                     <DateRangeFilter
                       value={dueDateFilter}
-                      onChange={setDueDateFilter}
+                      onChange={(value) => {
+                        setDueDateFilter(value);
+                        handleFiltersChange();
+                      }}
                       placeholder="Filter by due date"
                     />
                   </div>
@@ -465,7 +522,10 @@ export function InvoicesPageClient() {
                     <label htmlFor="amount-filter" className="text-sm font-medium">Amount</label>
                     <AmountFilter
                       value={amountFilter}
-                      onChange={setAmountFilter}
+                      onChange={(value) => {
+                        setAmountFilter(value);
+                        handleFiltersChange();
+                      }}
                       placeholder="Filter by amount"
                     />
                   </div>
@@ -478,6 +538,86 @@ export function InvoicesPageClient() {
           <Card>
             <CardContent className="p-0">{renderTableContent()}</CardContent>
           </Card>
+
+          {/* Pagination */}
+          {!loading && pagination.totalPages > 1 && (
+            <div className="flex justify-center">
+              <Pagination>
+                <PaginationContent>
+                  <PaginationItem>
+                    <PaginationPrevious
+                      href="#"
+                      size="default"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        if (pagination.hasPrevPage) {
+                          handlePageChange(pagination.page - 1);
+                        }
+                      }}
+                      className={!pagination.hasPrevPage ? "pointer-events-none opacity-50" : ""}
+                    />
+                  </PaginationItem>
+                  
+                  {/* Page numbers */}
+                  {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
+                    let pageNum;
+                    if (pagination.totalPages <= 5) {
+                      pageNum = i + 1;
+                    } else if (pagination.page <= 3) {
+                      pageNum = i + 1;
+                    } else if (pagination.page >= pagination.totalPages - 2) {
+                      pageNum = pagination.totalPages - 4 + i;
+                    } else {
+                      pageNum = pagination.page - 2 + i;
+                    }
+                    
+                    return (
+                      <PaginationItem key={pageNum}>
+                        <PaginationLink
+                          href="#"
+                          size="icon"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            handlePageChange(pageNum);
+                          }}
+                          isActive={pageNum === pagination.page}
+                        >
+                          {pageNum}
+                        </PaginationLink>
+                      </PaginationItem>
+                    );
+                  })}
+                  
+                  {pagination.totalPages > 5 && pagination.page < pagination.totalPages - 2 && (
+                    <PaginationItem>
+                      <PaginationEllipsis />
+                    </PaginationItem>
+                  )}
+                  
+                  <PaginationItem>
+                    <PaginationNext
+                      href="#"
+                      size="default"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        if (pagination.hasNextPage) {
+                          handlePageChange(pagination.page + 1);
+                        }
+                      }}
+                      className={!pagination.hasNextPage ? "pointer-events-none opacity-50" : ""}
+                    />
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
+            </div>
+          )}
+
+          {/* Pagination Info */}
+          {!loading && pagination.totalCount > 0 && (
+            <div className="text-center text-sm text-muted-foreground">
+              Showing {((pagination.page - 1) * pagination.limit) + 1} to {Math.min(pagination.page * pagination.limit, pagination.totalCount)} of {pagination.totalCount} invoices
+            </div>
+          )}
         </div>
       </main>
     </div>

@@ -10,8 +10,24 @@ async function handleGetInvoices(request: NextRequest) {
     throw createError.unauthorized("Authentication required to access invoices")
   }
 
-  const invoices = await DatabaseService.getInvoicesByUser(userId)
-  return NextResponse.json(invoices)
+  const { searchParams } = new URL(request.url)
+  const page = parseInt(searchParams.get('page') || '1')
+  const limit = parseInt(searchParams.get('limit') || '10')
+  const offset = (page - 1) * limit
+
+  const { invoices, totalCount } = await DatabaseService.getInvoicesByUserPaginated(userId, offset, limit)
+  
+  return NextResponse.json({
+    invoices,
+    pagination: {
+      page,
+      limit,
+      totalCount,
+      totalPages: Math.ceil(totalCount / limit),
+      hasNextPage: page < Math.ceil(totalCount / limit),
+      hasPrevPage: page > 1
+    }
+  })
 }
 
 export const GET = withErrorHandling(handleGetInvoices)

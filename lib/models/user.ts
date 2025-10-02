@@ -39,7 +39,7 @@ export interface Client {
 
 export interface LineItem {
   name: string
-  description: string // Added description field for line items
+  description: string
   quantity: number
   cost: number
   total: number

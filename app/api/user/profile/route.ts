@@ -12,7 +12,7 @@ async function handleGetProfile(request: NextRequest, context: AuthContext) {
   }
 }
 
-export const GET = withAuth(handleGetProfile) as any
+export const GET = withAuth(handleGetProfile)
 
 async function handleUpdateProfile(request: NextRequest, context: AuthContext) {
   try {
@@ -38,7 +38,7 @@ async function handleUpdateProfile(request: NextRequest, context: AuthContext) {
           street1: "",
           city: "",
           state: "",
-          zipCode: "",
+          zip: "",
           country: ""
         },
       })
@@ -54,7 +54,7 @@ async function handleUpdateProfile(request: NextRequest, context: AuthContext) {
           street1: "",
           city: "",
           state: "",
-          zipCode: "",
+          zip: "",
           country: ""
         },
       })
@@ -68,4 +68,4 @@ async function handleUpdateProfile(request: NextRequest, context: AuthContext) {
   }
 }
 
-export const POST = withAuth(handleUpdateProfile, { requireCSRF: true }) as any
+export const POST = withAuth(handleUpdateProfile, { requireCSRF: true })

@@ -2,20 +2,13 @@
 
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  PieChart,
-  Pie,
-  Cell,
-  BarChart,
-  Bar,
-} from "recharts"
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { AnalyticsMetrics } from "@/components/analytics-metrics"
+import { EnhancedChart } from "@/components/enhanced-chart"
+import { DateRangeFilterCard } from "@/components/date-range-filter-card"
 import { SkeletonStatCard, SkeletonChart } from "@/components/ui/skeleton"
+import { Badge } from "@/components/ui/badge"
+import { TrendingUp, TrendingDown, Clock, CheckCircle, DollarSign } from "lucide-react"
 
 interface UserAnalyticsData {
   basicStats: {
@@ -25,9 +18,24 @@ interface UserAnalyticsData {
     averageInvoice: number
     maxInvoice: number
     minInvoice: number
+    completedInvoices: number
+    draftInvoices: number
+    completionRate: number
+    avgCompletedInvoice: number
+    avgDraftInvoice: number
+    completedRevenue: number
+    draftRevenue: number
+    revenueGrowth: number
   }
   monthlyRevenue: Array<{
     month: string
+    revenue: number
+    invoiceCount: number
+    completedRevenue: number
+    draftRevenue: number
+  }>
+  weeklyRevenue: Array<{
+    week: string
     revenue: number
     invoiceCount: number
   }>
@@ -41,24 +49,52 @@ interface UserAnalyticsData {
     count: number
     totalRevenue: number
     averagePrice: number
+    totalQuantity: number
+  }>
+  clientPerformance: Array<{
+    _id: string
+    clientName: string
+    totalInvoices: number
+    totalRevenue: number
+    averageInvoice: number
+    lastInvoiceDate: string
+    completedInvoices: number
+    completedRevenue: number
+    completionRate: number
   }>
   recentActivity: Array<{
     _id: string
     invoiceCount: number
     revenue: number
+    completedCount: number
+    draftCount: number
   }>
+  paymentTrends: {
+    avgDaysToPayment: number
+    minDaysToPayment: number
+    maxDaysToPayment: number
+  }
 }
 
-const COLORS = ["#3b82f6", "#ef4444", "#22c55e", "#f59e0b", "#8b5cf6"]
+interface DateRange {
+  from: Date | undefined
+  to: Date | undefined
+}
 
 export function UserAnalytics() {
   const [data, setData] = useState<UserAnalyticsData | null>(null)
   const [loading, setLoading] = useState(true)
+  const [dateRange, setDateRange] = useState<DateRange>({ from: undefined, to: undefined })
 
   useEffect(() => {
     const fetchAnalytics = async () => {
       try {
-        const response = await fetch("/api/analytics/user")
+        setLoading(true)
+        const params = new URLSearchParams()
+        if (dateRange.from) params.append("startDate", dateRange.from.toISOString())
+        if (dateRange.to) params.append("endDate", dateRange.to.toISOString())
+        
+        const response = await fetch(`/api/analytics/user?${params.toString()}`)
         if (response.ok) {
           const analyticsData = await response.json()
           setData(analyticsData)
@@ -71,11 +107,14 @@ export function UserAnalytics() {
     }
 
     fetchAnalytics()
-  }, [])
+  }, [dateRange])
 
   if (loading) {
     return (
       <div className="space-y-6">
+        {/* Date Range Filter */}
+        <DateRangeFilterCard onDateRangeChange={setDateRange} />
+        
         {/* Basic Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <SkeletonStatCard />
@@ -84,17 +123,12 @@ export function UserAnalytics() {
           <SkeletonStatCard />
         </div>
 
-        {/* Revenue Timeline */}
+        {/* Charts */}
         <SkeletonChart />
-
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Status Distribution */}
           <SkeletonChart />
-          {/* Top Line Items */}
           <SkeletonChart />
         </div>
-
-        {/* Recent Activity */}
         <SkeletonChart />
       </div>
     )
@@ -106,162 +140,239 @@ export function UserAnalytics() {
 
   return (
     <div className="space-y-6">
-      {/* Basic Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Total Invoices</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{data.basicStats.totalInvoices}</div>
-          </CardContent>
-        </Card>
+      {/* Date Range Filter */}
+      <DateRangeFilterCard onDateRangeChange={setDateRange} />
 
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">${data.basicStats.totalRevenue.toLocaleString()}</div>
-          </CardContent>
-        </Card>
+      {/* Enhanced Metrics */}
+      <AnalyticsMetrics stats={data.basicStats} />
 
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Average Invoice</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">${data.basicStats.averageInvoice.toFixed(2)}</div>
-          </CardContent>
-        </Card>
+      {/* Main Analytics Tabs */}
+      <Tabs defaultValue="revenue" className="w-full">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="revenue">Revenue Analysis</TabsTrigger>
+          <TabsTrigger value="performance">Performance</TabsTrigger>
+          <TabsTrigger value="clients">Client Insights</TabsTrigger>
+          <TabsTrigger value="activity">Activity</TabsTrigger>
+        </TabsList>
 
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Total Clients</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{data.basicStats.totalClients}</div>
-          </CardContent>
-        </Card>
-      </div>
+        <TabsContent value="revenue" className="space-y-6">
+          {/* Revenue Timeline */}
+          <EnhancedChart
+            data={data.monthlyRevenue}
+            title="Revenue Timeline"
+            description="Monthly revenue from completed invoices only"
+            chartType="line"
+            dataKeys={["revenue", "invoiceCount"]}
+            xAxisKey="month"
+            height={400}
+            showControls={true}
+          />
 
-      {/* Revenue Timeline */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Revenue Timeline</CardTitle>
-          <CardDescription>Monthly revenue and invoice count over time</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <ChartContainer
-            config={{
-              revenue: { label: "Revenue", color: "hsl(var(--chart-1))" },
-              invoiceCount: { label: "Invoice Count", color: "hsl(var(--chart-2))" },
-            }}
-            className="h-[300px]"
-          >
-            <LineChart data={data.monthlyRevenue} width={533} height={300}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="month" />
-              <YAxis yAxisId="left" />
-              <YAxis yAxisId="right" orientation="right" />
-              <ChartTooltip content={<ChartTooltipContent />} />
-              <Line yAxisId="left" type="monotone" dataKey="revenue" stroke="var(--color-revenue)" strokeWidth={2} />
-              <Line
-                yAxisId="right"
-                type="monotone"
-                dataKey="invoiceCount"
-                stroke="var(--color-invoiceCount)"
-                strokeWidth={2}
-              />
-            </LineChart>
-          </ChartContainer>
-        </CardContent>
-      </Card>
+          {/* Weekly Revenue */}
+          <EnhancedChart
+            data={data.weeklyRevenue}
+            title="Weekly Revenue Trend"
+            description="Last 12 weeks revenue from completed invoices"
+            chartType="area"
+            dataKeys={["revenue", "invoiceCount"]}
+            xAxisKey="week"
+            height={300}
+            showControls={true}
+          />
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Invoice Status Distribution */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Invoice Status Distribution</CardTitle>
-            <CardDescription>Breakdown of invoice statuses</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ChartContainer
-              config={{
-                count: { label: "Count", color: "hsl(var(--chart-1))" },
-              }}
-              className="h-[250px]"
-            >
-              <PieChart width={444} height={250}>
-                <Pie
-                  data={data.statusDistribution}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={({ _id, count }) => `${_id}: ${count}`}
-                  outerRadius={80}
-                  fill="#8884d8"
-                  dataKey="count"
-                >
-                  {data.statusDistribution.map((entry, index) => (
-                    <Cell key={`cell-${entry._id}-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <ChartTooltip content={<ChartTooltipContent />} />
-              </PieChart>
-            </ChartContainer>
-          </CardContent>
-        </Card>
+          {/* Revenue Distribution */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <EnhancedChart
+              data={data.monthlyRevenue.slice(-6)}
+              title="Recent Monthly Invoice Volume"
+              description="Invoice count trends over the last 6 months"
+              chartType="bar"
+              dataKeys={["invoiceCount"]}
+              xAxisKey="month"
+              height={300}
+              showControls={false}
+            />
 
-        {/* Top Line Items */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Top Line Items</CardTitle>
-            <CardDescription>Most frequently used line items</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ChartContainer
-              config={{
-                count: { label: "Usage Count", color: "hsl(var(--chart-1))" },
-              }}
-              className="h-[250px]"
-            >
-              <BarChart data={data.topLineItems.slice(0, 5)} layout="horizontal" width={444} height={250}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis type="number" />
-                <YAxis dataKey="_id" type="category" width={100} />
-                <ChartTooltip content={<ChartTooltipContent />} />
-                <Bar dataKey="count" fill="var(--color-count)" />
-              </BarChart>
-            </ChartContainer>
-          </CardContent>
-        </Card>
-      </div>
+            <EnhancedChart
+              data={data.topLineItems.slice(0, 8)}
+              title="Top Revenue Line Items"
+              description="Most profitable services and products (completed invoices only)"
+              chartType="bar"
+              dataKeys={["totalRevenue"]}
+              xAxisKey="_id"
+              height={300}
+              showControls={true}
+              allowedChartTypes={["bar", "pie"]}
+            />
+          </div>
+        </TabsContent>
 
-      {/* Recent Activity */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Recent Activity (Last 30 Days)</CardTitle>
-          <CardDescription>Daily invoice creation and revenue</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <ChartContainer
-            config={{
-              invoiceCount: { label: "Invoices", color: "hsl(var(--chart-1))" },
-              revenue: { label: "Revenue", color: "hsl(var(--chart-2))" },
-            }}
-            className="h-[200px]"
-          >
-            <BarChart data={data.recentActivity} width={356} height={200}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="_id" />
-              <YAxis />
-              <ChartTooltip content={<ChartTooltipContent />} />
-              <Bar dataKey="invoiceCount" fill="var(--color-invoiceCount)" />
-            </BarChart>
-          </ChartContainer>
-        </CardContent>
-      </Card>
+        <TabsContent value="performance" className="space-y-6">
+          {/* Performance Metrics */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium flex items-center">
+                  <CheckCircle className="h-4 w-4 mr-2 text-green-500" />
+                  Completion Rate
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-green-600">
+                  {data.basicStats.completionRate.toFixed(1)}%
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  {data.basicStats.completedInvoices} of {data.basicStats.totalInvoices} invoices
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium flex items-center">
+                  <Clock className="h-4 w-4 mr-2 text-blue-500" />
+                  Avg Payment Time
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  {data.paymentTrends.avgDaysToPayment.toFixed(0)} days
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  Range: {data.paymentTrends.minDaysToPayment.toFixed(0)} - {data.paymentTrends.maxDaysToPayment.toFixed(0)} days
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium flex items-center">
+                  <DollarSign className="h-4 w-4 mr-2 text-purple-500" />
+                  Revenue Growth
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold flex items-center">
+                  {data.basicStats.revenueGrowth >= 0 ? (
+                    <TrendingUp className="h-5 w-5 mr-1 text-green-500" />
+                  ) : (
+                    <TrendingDown className="h-5 w-5 mr-1 text-red-500" />
+                  )}
+                  {data.basicStats.revenueGrowth >= 0 ? '+' : ''}{data.basicStats.revenueGrowth.toFixed(1)}%
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  vs previous period
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Line Items Performance */}
+          <EnhancedChart
+            data={data.topLineItems.slice(0, 10)}
+            title="Line Items Performance"
+            description="Revenue and usage analysis by service/product"
+            chartType="composed"
+            dataKeys={["totalRevenue", "count", "averagePrice"]}
+            xAxisKey="_id"
+            height={400}
+            showControls={true}
+          />
+        </TabsContent>
+
+        <TabsContent value="clients" className="space-y-6">
+          {/* Client Performance Table */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Client Performance Overview</CardTitle>
+              <CardDescription>Revenue and activity metrics by client</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {data.clientPerformance.slice(0, 10).map((client, index) => (
+                  <div key={client._id} className="flex items-center justify-between p-4 border rounded-lg">
+                    <div className="flex-1">
+                      <div className="font-medium">{client.clientName}</div>
+                      <div className="text-sm text-muted-foreground">
+                        {client.totalInvoices} invoices • Last: {new Date(client.lastInvoiceDate).toLocaleDateString()}
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-4 text-sm">
+                      <div className="text-right">
+                        <div className="font-medium">${client.totalRevenue.toLocaleString()}</div>
+                        <div className="text-muted-foreground">Total Revenue</div>
+                      </div>
+                      <div className="text-right">
+                        <div className="font-medium">${client.averageInvoice.toFixed(0)}</div>
+                        <div className="text-muted-foreground">Avg Invoice</div>
+                      </div>
+                      <div className="text-right">
+                        <Badge variant={client.completionRate >= 80 ? "default" : "secondary"}>
+                          {client.completionRate.toFixed(0)}%
+                        </Badge>
+                        <div className="text-muted-foreground">Complete</div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Client Revenue Chart */}
+          <EnhancedChart
+            data={data.clientPerformance.slice(0, 8)}
+            title="Top Clients by Revenue"
+            description="Revenue contribution by top performing clients"
+            chartType="bar"
+            dataKeys={["totalRevenue", "completedRevenue"]}
+            xAxisKey="clientName"
+            height={400}
+            showControls={true}
+          />
+        </TabsContent>
+
+        <TabsContent value="activity" className="space-y-6">
+          {/* Recent Activity */}
+          <EnhancedChart
+            data={data.recentActivity}
+            title="Recent Activity (Last 30 Days)"
+            description="Daily completed invoice activity and revenue"
+            chartType="line"
+            dataKeys={["invoiceCount", "revenue"]}
+            xAxisKey="_id"
+            height={400}
+            showControls={true}
+          />
+
+          {/* Activity Summary */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium">Completed Invoices</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  {data.recentActivity.reduce((sum, day) => sum + day.invoiceCount, 0)}
+                </div>
+                <div className="text-xs text-muted-foreground">completed in last 30 days</div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium">Recent Revenue</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-green-600">
+                  ${data.recentActivity.reduce((sum, day) => sum + day.revenue, 0).toLocaleString()}
+                </div>
+                <div className="text-xs text-muted-foreground">from completed invoices</div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   )
 }

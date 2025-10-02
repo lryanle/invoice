@@ -104,6 +104,18 @@ export class DatabaseService {
     return await db.collection<Invoice>("invoices").find({ userId }).sort({ createdAt: -1 }).toArray()
   }
 
+  static async getInvoicesByUserPaginated(userId: string, offset: number, limit: number) {
+    const db = await this.getDb()
+    const collection = db.collection<Invoice>("invoices")
+    
+    const [invoices, totalCount] = await Promise.all([
+      collection.find({ userId }).sort({ createdAt: -1 }).skip(offset).limit(limit).toArray(),
+      collection.countDocuments({ userId })
+    ])
+    
+    return { invoices, totalCount }
+  }
+
   static async getInvoicesByClient(clientId: string) {
     const db = await this.getDb()
     return await db.collection<Invoice>("invoices").find({ clientId }).sort({ createdAt: -1 }).toArray()
@@ -191,25 +203,47 @@ export class DatabaseService {
   }
 
   // Analytics methods
-  static async getClientAnalytics(userId: string, clientId?: string) {
+  static async getClientAnalytics(userId: string, clientId?: string, dateRange?: { start: Date; end: Date }) {
     const db = await this.getDb()
     
-    if (clientId) {
+    // Build match criteria with optional date range - only include completed invoices
+    const matchCriteria: any = { userId, status: "complete" }
+    if (dateRange) {
+      matchCriteria.date = { $gte: dateRange.start, $lte: dateRange.end }
+    }
+    
+    if (clientId && clientId !== "all") {
       // Get analytics for specific client
       const client = await db.collection("clients").findOne({ _id: new ObjectId(clientId), userId })
       if (!client) return null
 
       const invoices = await db.collection<Invoice>("invoices").find({ clientId, userId }).toArray()
       
-      const totalInvoices = invoices.length
-      const totalRevenue = invoices.reduce((sum: number, inv: Invoice) => sum + inv.total, 0)
+      // Filter to only completed invoices and by date range if provided
+      const completedInvoices = invoices.filter(inv => 
+        inv.status === 'complete' && 
+        (!dateRange || (inv.date >= dateRange.start && inv.date <= dateRange.end))
+      )
+      
+      const draftInvoices = invoices.filter(inv => 
+        inv.status === 'draft' && 
+        (!dateRange || (inv.date >= dateRange.start && inv.date <= dateRange.end))
+      )
+      
+      const totalInvoices = completedInvoices.length
+      const totalRevenue = completedInvoices.reduce((sum: number, inv: Invoice) => sum + inv.total, 0)
       const averageInvoice = totalInvoices > 0 ? totalRevenue / totalInvoices : 0
 
-      // Line item breakdown for this client
+      // Calculate additional metrics
+      const completionRate = (invoices.length > 0) ? (completedInvoices.length / invoices.length) * 100 : 0
+      const completedRevenue = completedInvoices.reduce((sum, inv) => sum + inv.total, 0)
+      const draftRevenue = draftInvoices.reduce((sum, inv) => sum + inv.total, 0)
+
+      // Line item breakdown for this client - only completed invoices
       const lineItemBreakdown = await db
         .collection("invoices")
         .aggregate([
-          { $match: { clientId, userId } },
+          { $match: { clientId, userId, status: "complete", ...(dateRange ? { date: { $gte: dateRange.start, $lte: dateRange.end } } : {}) } },
           { $unwind: "$lineItems" },
           {
             $group: {
@@ -217,22 +251,23 @@ export class DatabaseService {
               count: { $sum: 1 },
               totalRevenue: { $sum: "$lineItems.total" },
               averagePrice: { $avg: "$lineItems.cost" },
+              totalQuantity: { $sum: "$lineItems.quantity" },
             },
           },
           { $sort: { totalRevenue: -1 } },
         ])
         .toArray()
 
-      // Monthly revenue for this client
+      // Monthly revenue for this client - only completed invoices
       const monthlyRevenue = await db
         .collection("invoices")
         .aggregate([
-          { $match: { clientId, userId } },
+          { $match: { clientId, userId, status: "complete", ...(dateRange ? { date: { $gte: dateRange.start, $lte: dateRange.end } } : {}) } },
           {
             $group: {
               _id: {
-                year: { $year: "$createdAt" },
-                month: { $month: "$createdAt" },
+                year: { $year: "$date" },
+                month: { $month: "$date" },
               },
               revenue: { $sum: "$total" },
               invoiceCount: { $sum: 1 },
@@ -242,22 +277,79 @@ export class DatabaseService {
         ])
         .toArray()
 
+      // Weekly revenue for this client (last 12 weeks) - only completed invoices
+      const twelveWeeksAgo = new Date()
+      twelveWeeksAgo.setDate(twelveWeeksAgo.getDate() - 84)
+      
+      const weeklyRevenue = await db
+        .collection("invoices")
+        .aggregate([
+          { $match: { clientId, userId, status: "complete", date: { $gte: twelveWeeksAgo } } },
+          {
+            $group: {
+              _id: { $dateToString: { format: "%Y-W%U", date: "$date" } },
+              revenue: { $sum: "$total" },
+              invoiceCount: { $sum: 1 },
+            },
+          },
+          { $sort: { _id: 1 } },
+        ])
+        .toArray()
+
+      // Recent activity for this client (last 30 days) - only completed invoices
+      const thirtyDaysAgo = new Date()
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+
+      const recentActivity = await db
+        .collection("invoices")
+        .aggregate([
+          { $match: { clientId, userId, status: "complete", date: { $gte: thirtyDaysAgo } } },
+          {
+            $group: {
+              _id: { $dateToString: { format: "%Y-%m-%d", date: "$date" } },
+              invoiceCount: { $sum: 1 },
+              revenue: { $sum: "$total" },
+              completedCount: { $sum: 1 }, // All are completed
+              draftCount: { $sum: 0 }, // No drafts in this query
+            },
+          },
+          { $sort: { _id: 1 } },
+        ])
+        .toArray()
+
       return {
         client,
-        stats: { totalInvoices, totalRevenue, averageInvoice },
+        stats: { 
+          totalInvoices, 
+          totalRevenue, 
+          averageInvoice,
+          completedInvoices: completedInvoices.length,
+          draftInvoices: draftInvoices.length,
+          completionRate,
+          completedRevenue,
+          draftRevenue,
+        },
         lineItemBreakdown,
         monthlyRevenue: monthlyRevenue.map((item: any) => ({
           month: `${item._id.year}-${String(item._id.month).padStart(2, "0")}`,
           revenue: item.revenue,
           invoiceCount: item.invoiceCount,
+          completedRevenue: item.revenue, // All revenue is from completed invoices
+          draftRevenue: 0, // No draft revenue included
         })),
+        weeklyRevenue: weeklyRevenue.map((item: any) => ({
+          week: item._id,
+          revenue: item.revenue,
+          invoiceCount: item.invoiceCount,
+        })),
+        recentActivity,
       }
     } else {
-      // Get analytics for all clients
-      return await db
+      // Get analytics for all clients - only completed invoices
+      const clientsAnalytics = await db
         .collection("invoices")
         .aggregate([
-          { $match: { userId } },
+          { $match: matchCriteria },
           {
             $lookup: {
               from: "clients",
@@ -275,16 +367,54 @@ export class DatabaseService {
               totalRevenue: { $sum: "$total" },
               averageInvoice: { $avg: "$total" },
               lastInvoiceDate: { $max: "$createdAt" },
+              completedInvoices: { $sum: 1 }, // All are completed since we filtered by status
+              completedRevenue: { $sum: "$total" }, // All revenue is from completed invoices
+              draftInvoices: { $sum: 0 }, // No drafts in this query
+              draftRevenue: { $sum: 0 }, // No draft revenue
             },
           },
           { $sort: { totalRevenue: -1 } },
         ])
         .toArray()
+
+      // Calculate completion rates for each client (need to get total invoices including drafts)
+      const allInvoicesByClient = await db
+        .collection("invoices")
+        .aggregate([
+          { $match: { userId, ...(dateRange ? { date: { $gte: dateRange.start, $lte: dateRange.end } } : {}) } },
+          {
+            $group: {
+              _id: "$clientId",
+              totalInvoicesAll: { $sum: 1 },
+              completedInvoicesAll: { $sum: { $cond: [{ $eq: ["$status", "complete"] }, 1, 0] } },
+            },
+          },
+        ])
+        .toArray()
+
+      // Merge completion rates
+      const clientsWithCompletionRate = clientsAnalytics.map(client => {
+        const allInvoices = allInvoicesByClient.find(ai => ai._id.toString() === client._id.toString())
+        return {
+          ...client,
+          completionRate: allInvoices && allInvoices.totalInvoicesAll > 0 
+            ? (allInvoices.completedInvoicesAll / allInvoices.totalInvoicesAll) * 100 
+            : 0
+        }
+      })
+
+      return { clientsAnalytics: clientsWithCompletionRate }
     }
   }
 
-  static async getUserAnalytics(userId: string) {
+  static async getUserAnalytics(userId: string, dateRange?: { start: Date; end: Date }) {
     const db = await this.getDb()
+
+    // Build match criteria with optional date range - only include completed invoices
+    const matchCriteria: any = { userId, status: "complete" }
+    if (dateRange) {
+      matchCriteria.date = { $gte: dateRange.start, $lte: dateRange.end }
+    }
 
     // Get basic stats using existing methods
     const [invoices, clients] = await Promise.all([
@@ -292,23 +422,49 @@ export class DatabaseService {
       this.getClientsByUser(userId)
     ])
 
-    const totalInvoices = invoices.length
-    const totalClients = clients.length
-    const totalRevenue = invoices.reduce((sum: number, inv: Invoice) => sum + inv.total, 0)
-    const averageInvoice = totalInvoices > 0 ? totalRevenue / totalInvoices : 0
-    const maxInvoice = totalInvoices > 0 ? Math.max(...invoices.map((inv: Invoice) => inv.total)) : 0
-    const minInvoice = totalInvoices > 0 ? Math.min(...invoices.map((inv: Invoice) => inv.total)) : 0
+    // Filter to only completed invoices and by date range if provided
+    const completedInvoices = invoices.filter(inv => 
+      inv.status === 'complete' && 
+      (!dateRange || (inv.date >= dateRange.start && inv.date <= dateRange.end))
+    )
+    
+    const draftInvoices = invoices.filter(inv => 
+      inv.status === 'draft' && 
+      (!dateRange || (inv.date >= dateRange.start && inv.date <= dateRange.end))
+    )
 
-    // Monthly revenue timeline
+    const totalInvoices = completedInvoices.length
+    const totalClients = clients.length
+    const totalRevenue = completedInvoices.reduce((sum: number, inv: Invoice) => sum + inv.total, 0)
+    const averageInvoice = totalInvoices > 0 ? totalRevenue / totalInvoices : 0
+    const maxInvoice = totalInvoices > 0 ? Math.max(...completedInvoices.map((inv: Invoice) => inv.total)) : 0
+    const minInvoice = totalInvoices > 0 ? Math.min(...completedInvoices.map((inv: Invoice) => inv.total)) : 0
+
+    // Calculate additional metrics
+    const completionRate = (invoices.length > 0) ? (completedInvoices.length / invoices.length) * 100 : 0
+    
+    // Calculate average invoice value by status
+    const avgCompletedInvoice = completedInvoices.length > 0 
+      ? completedInvoices.reduce((sum, inv) => sum + inv.total, 0) / completedInvoices.length 
+      : 0
+    const avgDraftInvoice = draftInvoices.length > 0 
+      ? draftInvoices.reduce((sum, inv) => sum + inv.total, 0) / draftInvoices.length 
+      : 0
+
+    // Revenue by status
+    const completedRevenue = completedInvoices.reduce((sum, inv) => sum + inv.total, 0)
+    const draftRevenue = draftInvoices.reduce((sum, inv) => sum + inv.total, 0)
+
+    // Monthly revenue timeline - only completed invoices
     const monthlyRevenue = await db
       .collection("invoices")
       .aggregate([
-        { $match: { userId } },
+        { $match: matchCriteria },
         {
           $group: {
             _id: {
-              year: { $year: "$createdAt" },
-              month: { $month: "$createdAt" },
+              year: { $year: "$date" },
+              month: { $month: "$date" },
             },
             revenue: { $sum: "$total" },
             invoiceCount: { $sum: 1 },
@@ -318,26 +474,45 @@ export class DatabaseService {
       ])
       .toArray()
 
-    // Invoice status distribution
+    // Weekly revenue (last 12 weeks) - only completed invoices
+    const twelveWeeksAgo = new Date()
+    twelveWeeksAgo.setDate(twelveWeeksAgo.getDate() - 84)
+    
+    const weeklyRevenue = await db
+      .collection("invoices")
+      .aggregate([
+        { $match: { userId, status: "complete", date: { $gte: twelveWeeksAgo } } },
+        {
+          $group: {
+            _id: { $dateToString: { format: "%Y-W%U", date: "$date" } },
+            revenue: { $sum: "$total" },
+            invoiceCount: { $sum: 1 },
+          },
+        },
+        { $sort: { _id: 1 } },
+      ])
+      .toArray()
+
+    // Invoice status distribution - include all invoices for status breakdown
     const statusDistribution = await db
       .collection("invoices")
       .aggregate([
-        { $match: { userId } },
+        { $match: { userId, ...(dateRange ? { date: { $gte: dateRange.start, $lte: dateRange.end } } : {}) } },
         {
           $group: {
             _id: "$status",
             count: { $sum: 1 },
-            totalAmount: { $sum: "$total" },
+            totalAmount: { $sum: { $cond: [{ $eq: ["$status", "complete"] }, "$total", 0] } },
           },
         },
       ])
       .toArray()
 
-    // Top line items
+    // Top line items - only from completed invoices
     const topLineItems = await db
       .collection("invoices")
       .aggregate([
-        { $match: { userId } },
+        { $match: matchCriteria },
         { $unwind: "$lineItems" },
         {
           $group: {
@@ -345,31 +520,100 @@ export class DatabaseService {
             count: { $sum: 1 },
             totalRevenue: { $sum: "$lineItems.total" },
             averagePrice: { $avg: "$lineItems.cost" },
+            totalQuantity: { $sum: "$lineItems.quantity" },
           },
         },
-        { $sort: { count: -1 } },
+        { $sort: { totalRevenue: -1 } },
+        { $limit: 15 },
+      ])
+      .toArray()
+
+    // Client performance metrics - only completed invoices
+    const clientPerformance = await db
+      .collection("invoices")
+      .aggregate([
+        { $match: matchCriteria },
+        {
+          $lookup: {
+            from: "clients",
+            localField: "clientId",
+            foreignField: "_id",
+            as: "client",
+          },
+        },
+        { $unwind: "$client" },
+        {
+          $group: {
+            _id: "$clientId",
+            clientName: { $first: "$client.name" },
+            totalInvoices: { $sum: 1 },
+            totalRevenue: { $sum: "$total" },
+            averageInvoice: { $avg: "$total" },
+            lastInvoiceDate: { $max: "$createdAt" },
+            completedInvoices: { $sum: 1 }, // All are completed since we filtered by status
+            completedRevenue: { $sum: "$total" }, // All revenue is from completed invoices
+          },
+        },
+        { $sort: { totalRevenue: -1 } },
         { $limit: 10 },
       ])
       .toArray()
 
-    // Recent activity (last 30 days)
+    // Recent activity (last 30 days) - only completed invoices
     const thirtyDaysAgo = new Date()
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
 
     const recentActivity = await db
       .collection("invoices")
       .aggregate([
-        { $match: { userId, createdAt: { $gte: thirtyDaysAgo } } },
+        { $match: { userId, status: "complete", date: { $gte: thirtyDaysAgo } } },
         {
           $group: {
-            _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+            _id: { $dateToString: { format: "%Y-%m-%d", date: "$date" } },
             invoiceCount: { $sum: 1 },
             revenue: { $sum: "$total" },
+            completedCount: { $sum: 1 }, // All are completed
+            draftCount: { $sum: 0 }, // No drafts in this query
           },
         },
         { $sort: { _id: 1 } },
       ])
       .toArray()
+
+    // Payment trends (based on due dates)
+    const paymentTrends = await db
+      .collection("invoices")
+      .aggregate([
+        { $match: { userId, status: "complete" } },
+        {
+          $addFields: {
+            daysToPayment: {
+              $divide: [
+                { $subtract: ["$updatedAt", "$createdAt"] },
+                1000 * 60 * 60 * 24
+              ]
+            }
+          }
+        },
+        {
+          $group: {
+            _id: null,
+            avgDaysToPayment: { $avg: "$daysToPayment" },
+            minDaysToPayment: { $min: "$daysToPayment" },
+            maxDaysToPayment: { $max: "$daysToPayment" },
+          }
+        }
+      ])
+      .toArray()
+
+    // Revenue growth calculation
+    const currentPeriod = monthlyRevenue.slice(-6) // Last 6 months
+    const previousPeriod = monthlyRevenue.slice(-12, -6) // Previous 6 months
+    const currentPeriodRevenue = currentPeriod.reduce((sum, item) => sum + item.revenue, 0)
+    const previousPeriodRevenue = previousPeriod.reduce((sum, item) => sum + item.revenue, 0)
+    const revenueGrowth = previousPeriodRevenue > 0 
+      ? ((currentPeriodRevenue - previousPeriodRevenue) / previousPeriodRevenue) * 100 
+      : 0
 
     return {
       basicStats: {
@@ -379,15 +623,32 @@ export class DatabaseService {
         averageInvoice,
         maxInvoice,
         minInvoice,
+        completedInvoices: completedInvoices.length,
+        draftInvoices: draftInvoices.length,
+        completionRate,
+        avgCompletedInvoice,
+        avgDraftInvoice,
+        completedRevenue,
+        draftRevenue,
+        revenueGrowth,
       },
       monthlyRevenue: monthlyRevenue.map((item: any) => ({
         month: `${item._id.year}-${String(item._id.month).padStart(2, "0")}`,
         revenue: item.revenue,
         invoiceCount: item.invoiceCount,
+        completedRevenue: item.revenue, // All revenue is from completed invoices
+        draftRevenue: 0, // No draft revenue included
+      })),
+      weeklyRevenue: weeklyRevenue.map((item: any) => ({
+        week: item._id,
+        revenue: item.revenue,
+        invoiceCount: item.invoiceCount,
       })),
       statusDistribution,
       topLineItems,
+      clientPerformance,
       recentActivity,
+      paymentTrends: paymentTrends[0] || { avgDaysToPayment: 0, minDaysToPayment: 0, maxDaysToPayment: 0 },
     }
   }
 }

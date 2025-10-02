@@ -2,6 +2,7 @@
 
 import React from 'react'
 import { useErrorHandler } from '@/lib/client-error-handler'
+import { TriangleAlert } from 'lucide-react'
 
 interface ErrorFallbackProps {
   readonly error: Error
@@ -25,11 +26,9 @@ export function ErrorFallback({
   }, [error, context, handleError])
 
   return (
-    <div className="flex flex-col items-center justify-center p-8 text-center">
+    <div className="h-screen flex flex-col items-center justify-center p-8 text-center">
       <div className="mb-4 text-destructive">
-        <svg className="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.268 19.5c-.77.833.192 2.5 1.732 2.5z" />
-        </svg>
+        <TriangleAlert className="h-20 w-20" />
       </div>
       <h2 className="mb-2 text-lg font-semibold text-foreground">
         Something went wrong
