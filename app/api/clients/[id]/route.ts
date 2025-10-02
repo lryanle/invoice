@@ -54,6 +54,11 @@ async function handleUpdateClient(request: NextRequest, { params }: { params: Pr
     throw createError.validationError("Invalid email format")
   }
 
+  // Validate address object
+  if (address && typeof address !== 'object') {
+    throw createError.validationError("Address must be an object")
+  }
+
   // Verify ownership
   const client = await DatabaseService.getClientById(id)
   if (!client || client.userId !== userId) {
@@ -63,7 +68,14 @@ async function handleUpdateClient(request: NextRequest, { params }: { params: Pr
   await DatabaseService.updateClient(id, { 
     name: name.trim(), 
     email: email?.trim() || undefined, 
-    address: address?.trim() || undefined 
+    address: address ? {
+      street1: address.street1?.trim() || '',
+      street2: address.street2?.trim() || '',
+      city: address.city?.trim() || '',
+      state: address.state?.trim() || '',
+      country: address.country?.trim() || '',
+      zip: address.zip?.trim() || ''
+    } : undefined
   })
   const updatedClient = await DatabaseService.getClientById(id)
 

@@ -39,17 +39,23 @@ async function handleCreateClient(request: NextRequest) {
     throw createError.validationError("Invalid email format")
   }
 
+  // Validate address object
+  if (address && typeof address !== 'object') {
+    throw createError.validationError("Address must be an object")
+  }
+
   const clientId = await DatabaseService.createClient({
     userId,
     name: name.trim(),
     email: email?.trim() || '',
     invoiceCounter: 0,
     address: {
-      street1: address?.trim() || '',
-      city: '',
-      state: '',
-      country: '',
-      zip: ''
+      street1: address?.street1?.trim() || '',
+      street2: address?.street2?.trim() || '',
+      city: address?.city?.trim() || '',
+      state: address?.state?.trim() || '',
+      country: address?.country?.trim() || '',
+      zip: address?.zip?.trim() || ''
     },
   })
 
