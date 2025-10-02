@@ -1,15 +1,7 @@
 import { UserSettingsForm } from "@/components/user-settings-form"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { SettingsPageClient } from "./settings-page-client"
 
-interface SettingsPageProps {
-  readonly searchParams: Promise<{ [key: string]: string | string[] | undefined }>
-}
-
-export default async function SettingsPage({ searchParams }: SettingsPageProps) {
-  const params = await searchParams
-  const showIncompleteToast = params.incomplete === "true"
-
+export default function SettingsPage() {
   return (
     <div className="min-h-screen bg-background">
       <main className="container mx-auto px-4 py-8">
@@ -32,8 +24,6 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
           </Card>
         </div>
       </main>
-      
-      <SettingsPageClient showIncompleteToast={showIncompleteToast} />
     </div>
   )
 }

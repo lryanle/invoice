@@ -1,8 +1,10 @@
-import { validateProfileForInvoices } from "@/lib/profile-validation"
+import { ProfileValidationWrapper } from "@/components/profile-validation-wrapper"
 import { InvoicesPageClient } from "./invoices-page-client"
 
-export default async function InvoicesPage() {
-  await validateProfileForInvoices()
-
-  return <InvoicesPageClient />
+export default function InvoicesPage() {
+  return (
+    <ProfileValidationWrapper>
+      <InvoicesPageClient />
+    </ProfileValidationWrapper>
+  )
 }
