@@ -1,4 +1,4 @@
-import { ProfileValidationWrapper } from "@/components/profile-validation-wrapper"
+import { ProfileValidationWrapper } from "@/components/forms/profile-validation-wrapper"
 import { InvoicesPageClient } from "./invoices-page-client"
 
 export default function InvoicesPage() {

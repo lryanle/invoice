@@ -4,12 +4,11 @@ import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { DeleteInvoiceDialog } from "@/components/delete-invoice-dialog"
+import { DeleteInvoiceDialog } from "@/components/invoices/delete-invoice-dialog"
 import { useToast } from "@/hooks/use-toast"
 import { FileText, Loader2, Calendar, DollarSign, Download, Edit, Trash2 } from "lucide-react"
 import { SkeletonCard } from "@/components/ui/skeleton"
 import Link from "next/link"
-import { formatClientNameForFilename } from "@/lib/utils"
 
 interface Invoice {
   _id: string
@@ -93,10 +92,6 @@ export function InvoiceList() {
     }
   }
 
-  const handleInvoiceUpdated = () => {
-    fetchInvoices()
-  }
-
   const handleInvoiceDeleted = () => {
     fetchInvoices()
     toast({
@@ -119,8 +114,8 @@ export function InvoiceList() {
   if (loading) {
     return (
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {Array.from({ length: 6 }).map((_, i) => (
-          <SkeletonCard key={i} />
+        {Array.from({ length: 6 }).map((k, i) => (
+          <SkeletonCard key={`invoice-card-skeleton-${k}-${i}`} />
         ))}
       </div>
     )

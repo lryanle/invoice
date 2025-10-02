@@ -22,8 +22,8 @@ interface BasicStats {
 }
 
 interface AnalyticsMetricsProps {
-  stats: BasicStats
-  className?: string
+  readonly stats: BasicStats
+  readonly className?: string
 }
 
 export function AnalyticsMetrics({ stats, className }: AnalyticsMetricsProps) {

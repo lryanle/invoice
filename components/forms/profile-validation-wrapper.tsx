@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useProfileValidation } from "@/hooks/use-profile-validation"
-import { ProfileSetupDialog } from "@/components/profile-setup-dialog"
+import { ProfileSetupDialog } from "@/components/forms/profile-setup-dialog"
 
 interface ProfileValidationWrapperProps {
   readonly children: React.ReactNode

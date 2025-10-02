@@ -23,9 +23,9 @@ interface Client {
 }
 
 interface DeleteClientDialogProps {
-  children: React.ReactNode
-  client: Client
-  onClientDeleted?: () => void
+  readonly children: React.ReactNode
+  readonly client: Client
+  readonly onClientDeleted?: () => void
 }
 
 export function DeleteClientDialog({ children, client, onClientDeleted }: DeleteClientDialogProps) {

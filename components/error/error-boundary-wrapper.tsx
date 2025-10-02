@@ -2,7 +2,7 @@
 
 import React from 'react'
 import SentryErrorBoundary from './sentry-error-boundary'
-import { ErrorFallback } from '@/components/error-fallback'
+import { ErrorFallback } from '@/components/error/error-fallback'
 
 /**
  * Default fallback component for error boundaries

@@ -4,10 +4,11 @@ import { useEffect } from "react"
 import { useUser } from "@clerk/nextjs"
 import * as Sentry from "@sentry/nextjs"
 
-/**
- * Provider component that sets up Sentry user context
- */
-export function SentryUserContextProvider({ children }: { children: React.ReactNode }) {
+interface SentryUserContextProviderProps {
+  readonly children: React.ReactNode
+}
+
+export function SentryUserContextProvider({ children }: SentryUserContextProviderProps) {
   const { user, isLoaded } = useUser()
 
   useEffect(() => {

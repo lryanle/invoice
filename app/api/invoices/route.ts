@@ -47,15 +47,35 @@ async function handleCreateInvoice(request: NextRequest) {
     throw createError.validationError("Missing required fields: clientId, date, dueDate, and lineItems are required")
   }
 
-  // Validate line items
-  for (const item of lineItems) {
-    if (!item.description || typeof item.quantity !== 'number' || typeof item.price !== 'number') {
-      throw createError.validationError("Each line item must have description, quantity, and price")
+  // Helper function to parse numeric values
+  const parseNumericValue = (value: any): number => {
+    if (typeof value === 'number') return value
+    if (typeof value === 'string') return parseFloat(value) || 0
+    return 0
+  }
+
+  // Validate and normalize line items
+  const normalizedLineItems = lineItems.map((item: any) => ({
+    name: item.name || '',
+    description: item.description || '',
+    quantity: parseNumericValue(item.quantity),
+    cost: parseNumericValue(item.cost),
+    total: 0 // Will be calculated below
+  }))
+
+  // Validate required fields for line items
+  for (const item of normalizedLineItems) {
+    if (!item.name || item.name.trim() === '') {
+      throw createError.validationError("Each line item must have a name")
     }
   }
 
-  // Calculate totals
-  const subtotal = lineItems.reduce((sum: number, item: any) => sum + (item.quantity * item.price), 0)
+  // Calculate totals for normalized line items
+  const subtotal = normalizedLineItems.reduce((sum: number, item) => {
+    const itemTotal = item.quantity * item.cost
+    item.total = itemTotal
+    return sum + itemTotal
+  }, 0)
   const total = subtotal + (tax || 0)
 
   // Use provided invoice number or generate next number for client
@@ -68,7 +88,7 @@ async function handleCreateInvoice(request: NextRequest) {
     date: new Date(date),
     dueDate: new Date(dueDate),
     customerRef,
-    lineItems,
+    lineItems: normalizedLineItems,
     subtotal,
     tax,
     total,

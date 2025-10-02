@@ -39,7 +39,7 @@ export interface Client {
 
 export interface LineItem {
   name: string
-  description: string
+  description?: string
   quantity: number
   cost: number
   total: number

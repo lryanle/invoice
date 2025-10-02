@@ -9,13 +9,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea"
 import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { LineItemsSection } from "@/components/line-items-section"
-import { LiveInvoicePreview } from "@/components/live-invoice-preview"
+import { LineItemsSection } from "@/components/invoices/line-items-section"
+import { LiveInvoicePreview } from "@/components/invoices/live-invoice-preview"
 import { useToast } from "@/hooks/use-toast"
 import { useRouter } from "next/navigation"
 import { CalendarIcon, Building, FileText, Save, Download, Loader2, Plus } from "lucide-react"
-import { CreateClientDialog } from "./create-client-dialog"
-import { formatClientNameForFilename } from "@/lib/utils"
+import { CreateClientDialog } from "@/components/clients/create-client-dialog"
 
 function formatDate(date: Date | undefined) {
   if (!date) {
@@ -44,7 +43,7 @@ interface Client {
 
 interface LineItem {
   name: string
-  description: string
+  description?: string
   quantity: number
   cost: number
   total: number
@@ -62,7 +61,7 @@ interface InvoiceFormData {
 }
 
 interface InvoiceFormProps {
-  invoiceId?: string
+  readonly invoiceId?: string
 }
 
 export function InvoiceForm({ invoiceId }: InvoiceFormProps) {
@@ -260,7 +259,6 @@ export function InvoiceForm({ invoiceId }: InvoiceFormProps) {
       })
 
       if (response.ok) {
-        const invoice = await response.json()
         toast({
           title: isEdit ? "Invoice updated" : "Invoice saved",
           description: isEdit ? "Invoice was updated successfully." : `Invoice has been saved as ${status}.`,

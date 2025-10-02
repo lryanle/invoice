@@ -1,8 +1,8 @@
 "use client"
 
 import { useRef } from "react"
-import { ClientList, ClientListRef } from "@/components/client-list"
-import { CreateClientDialog } from "@/components/create-client-dialog"
+import { ClientList, ClientListRef } from "@/components/clients/client-list"
+import { CreateClientDialog } from "@/components/clients/create-client-dialog"
 import { Button } from "@/components/ui/button"
 import { Plus } from "lucide-react"
 

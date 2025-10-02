@@ -3,8 +3,8 @@
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { EnhancedChart } from "@/components/enhanced-chart"
-import { DateRangeFilterCard } from "@/components/date-range-filter-card"
+import { EnhancedChart } from "@/components/charts/enhanced-chart"
+import { DateRangeFilterCard } from "@/components/filters/date-range-filter-card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { CheckCircle, DollarSign, TrendingUp, FileText } from "lucide-react"
 

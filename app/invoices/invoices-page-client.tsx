@@ -29,9 +29,9 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
-import { DeleteInvoiceDialog } from "@/components/delete-invoice-dialog";
-import { DateRangeFilter, DateRangeFilterValue } from "@/components/date-range-filter";
-import { AmountFilter, AmountFilterValue } from "@/components/amount-filter";
+import { DeleteInvoiceDialog } from "@/components/invoices/delete-invoice-dialog";
+import { DateRangeFilter, DateRangeFilterValue } from "@/components/filters/date-range-filter";
+import { AmountFilter, AmountFilterValue } from "@/components/filters/amount-filter";
 import { useToast } from "@/hooks/use-toast";
 import {
   FileText,

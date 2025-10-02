@@ -1,5 +1,5 @@
 import { Suspense } from "react"
-import { AnalyticsDashboard } from "@/components/analytics-dashboard"
+import { AnalyticsDashboard } from "@/components/analytics/analytics-dashboard"
 import { validateProfileSetup } from "@/lib/profile-validation"
 
 export default async function AnalyticsPage() {

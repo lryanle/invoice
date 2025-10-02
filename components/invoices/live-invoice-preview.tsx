@@ -37,23 +37,23 @@ interface UserProfile {
 
 interface LineItem {
   name: string
-  description: string
+  description?: string
   quantity: number
   cost: number
   total: number
 }
 
 interface LiveInvoicePreviewProps {
-  clientId: string
-  date: string
-  dueDate: string
-  customerRef: string
-  invoiceNumber: string
-  lineItems: LineItem[]
-  tax: number
-  notes: string
-  subtotal: number
-  total: number
+  readonly clientId: string
+  readonly date: string
+  readonly dueDate: string
+  readonly customerRef: string
+  readonly invoiceNumber: string
+  readonly lineItems: LineItem[]
+  readonly tax: number
+  readonly notes: string
+  readonly subtotal: number
+  readonly total: number
 }
 
 export function LiveInvoicePreview({

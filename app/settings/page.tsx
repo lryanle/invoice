@@ -1,4 +1,4 @@
-import { UserSettingsForm } from "@/components/user-settings-form"
+import { UserSettingsForm } from "@/components/forms/user-settings-form"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 
 export default function SettingsPage() {

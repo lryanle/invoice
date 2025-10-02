@@ -6,19 +6,19 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Plus, Package, X } from "lucide-react"
-import { CreatableCombobox } from "./ui/combobox-createable"
+import { CreatableCombobox } from "@/components/ui/combobox-createable"
 
 interface LineItem {
   name: string
-  description: string
+  description?: string
   quantity: number
   cost: number
   total: number
 }
 
 interface LineItemsSectionProps {
-  lineItems: LineItem[]
-  onLineItemsChange: (lineItems: LineItem[]) => void
+  readonly lineItems: LineItem[]
+  readonly onLineItemsChange: (lineItems: LineItem[]) => void
 }
 
 interface LineItemSuggestion {
@@ -76,7 +76,7 @@ export function LineItemsSection({ lineItems, onLineItemsChange }: LineItemsSect
   }
 
   const addLineItem = () => {
-    onLineItemsChange([...lineItems, { name: "", description: "", quantity: 1.0, cost: 0, total: 0 }])
+    onLineItemsChange([...lineItems, { name: "", description: "", quantity: 0, cost: 0, total: 0 }])
   }
 
   const removeLineItem = (index: number) => {

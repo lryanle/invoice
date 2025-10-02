@@ -1,5 +1,5 @@
-import { InvoiceForm } from "@/components/invoice-form"
-import { ProfileValidationWrapper } from "@/components/profile-validation-wrapper"
+import { InvoiceForm } from "@/components/invoices/invoice-form"
+import { ProfileValidationWrapper } from "@/components/forms/profile-validation-wrapper"
 
 export default function NewInvoicePage() {
   return (

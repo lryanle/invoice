@@ -110,7 +110,7 @@ export function EnhancedChart({
   const renderChart = () => {
     const commonProps = {
       data,
-      width: "100%",
+      width: 400,
       height: height,
     }
 
@@ -189,13 +189,13 @@ export function EnhancedChart({
               cx="50%"
               cy="50%"
               labelLine={false}
-              label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+              label={({ name, percent }: any) => `${name} ${(percent * 100).toFixed(0)}%`}
               outerRadius={80}
               fill="#8884d8"
               dataKey={selectedDataKeys[0] || "value"}
             >
               {data.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                <Cell key={`cell-${entry.name || entry[xAxisKey] || index}`} fill={COLORS[index % COLORS.length]} />
               ))}
             </Pie>
             <ChartTooltip content={<ChartTooltipContent />} />
@@ -329,7 +329,7 @@ export function EnhancedChart({
           className="w-full"
         >
           <ResponsiveContainer width="100%" height={height}>
-            {renderChart()}
+            {renderChart() || <div>No chart data available</div>}
           </ResponsiveContainer>
         </ChartContainer>
       </CardContent>

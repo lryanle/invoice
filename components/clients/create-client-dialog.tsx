@@ -33,8 +33,8 @@ interface ClientFormData {
 }
 
 interface CreateClientDialogProps {
-  children: React.ReactNode
-  onClientCreated?: () => void
+  readonly children: React.ReactNode
+  readonly onClientCreated?: () => void
 }
 
 export function CreateClientDialog({ children, onClientCreated }: CreateClientDialogProps) {
