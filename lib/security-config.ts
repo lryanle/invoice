@@ -26,13 +26,13 @@ export const SECURITY_CONFIG = {
     // Content Security Policy
     CSP: {
       DEFAULT_SRC: "'self'",
-      SCRIPT_SRC: "'self' 'unsafe-inline' 'unsafe-eval' https://js.clerk.dev https://*.clerk.accounts.dev https://*.clerk.com https://va.vercel-scripts.com",
-      SCRIPT_SRC_ELEM: "'self' 'unsafe-inline' https://js.clerk.dev https://*.clerk.accounts.dev https://*.clerk.com https://va.vercel-scripts.com",
+      SCRIPT_SRC: "'self' 'unsafe-inline' 'unsafe-eval' https://js.clerk.dev https://*.clerk.accounts.dev https://*.clerk.com https://clerk.lryanle.com https://va.vercel-scripts.com",
+      SCRIPT_SRC_ELEM: "'self' 'unsafe-inline' https://js.clerk.dev https://*.clerk.accounts.dev https://*.clerk.com https://clerk.lryanle.com https://va.vercel-scripts.com",
       STYLE_SRC: "'self' 'unsafe-inline' https://fonts.googleapis.com https://*.clerk.accounts.dev",
       STYLE_SRC_ELEM: "'self' 'unsafe-inline' https://fonts.googleapis.com https://*.clerk.accounts.dev",
       FONT_SRC: "'self' https://fonts.gstatic.com data:",
       IMG_SRC: "'self' data: https: blob:",
-      CONNECT_SRC: "'self' https://api.clerk.com https://*.clerk.accounts.dev https://*.clerk.com https://vitals.vercel-insights.com",
+      CONNECT_SRC: "'self' https://api.clerk.com https://*.clerk.accounts.dev https://*.clerk.com https://clerk.lryanle.com https://vitals.vercel-insights.com",
       FRAME_SRC: "'self' https://*.clerk.accounts.dev",
       WORKER_SRC: "'self' blob:",
       OBJECT_SRC: "'none'",

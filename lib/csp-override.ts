@@ -6,13 +6,13 @@
 export function getDevelopmentCSP(): string {
   return [
     "default-src 'self'",
-    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.clerk.dev https://*.clerk.accounts.dev https://*.clerk.com https://va.vercel-scripts.com",
-    "script-src-elem 'self' 'unsafe-inline' https://js.clerk.dev https://*.clerk.accounts.dev https://*.clerk.com https://va.vercel-scripts.com",
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.clerk.dev https://*.clerk.accounts.dev https://*.clerk.com https://clerk.lryanle.com https://va.vercel-scripts.com",
+    "script-src-elem 'self' 'unsafe-inline' https://js.clerk.dev https://*.clerk.accounts.dev https://*.clerk.com https://clerk.lryanle.com https://va.vercel-scripts.com",
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://*.clerk.accounts.dev",
     "style-src-elem 'self' 'unsafe-inline' https://fonts.googleapis.com https://*.clerk.accounts.dev",
     "font-src 'self' https://fonts.gstatic.com data:",
     "img-src 'self' data: https: blob:",
-    "connect-src 'self' https://api.clerk.com https://*.clerk.accounts.dev https://*.clerk.com wss://*.clerk.accounts.dev https://vitals.vercel-insights.com https://*.ingest.sentry.io https://*.ingest.us.sentry.io webpack:",
+    "connect-src 'self' https://api.clerk.com https://*.clerk.accounts.dev https://*.clerk.com https://clerk.lryanle.com wss://*.clerk.accounts.dev https://vitals.vercel-insights.com https://*.ingest.sentry.io https://*.ingest.us.sentry.io webpack:",
     "frame-src 'self' https://*.clerk.accounts.dev https://*.clerk.com",
     "worker-src 'self' blob:",
     "object-src 'none'",
@@ -25,13 +25,13 @@ export function getDevelopmentCSP(): string {
 export function getProductionCSP(): string {
   return [
     "default-src 'self'",
-    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.clerk.dev https://*.clerk.accounts.dev https://va.vercel-scripts.com",
-    "script-src-elem 'self' 'unsafe-inline' https://js.clerk.dev https://*.clerk.accounts.dev https://va.vercel-scripts.com",
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.clerk.dev https://*.clerk.accounts.dev https://clerk.lryanle.com https://va.vercel-scripts.com",
+    "script-src-elem 'self' 'unsafe-inline' https://js.clerk.dev https://*.clerk.accounts.dev https://clerk.lryanle.com https://va.vercel-scripts.com",
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "style-src-elem 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "font-src 'self' https://fonts.gstatic.com data:",
     "img-src 'self' data: https: blob:",
-    "connect-src 'self' https://api.clerk.com https://*.clerk.accounts.dev https://vitals.vercel-insights.com https://*.ingest.sentry.io https://*.ingest.us.sentry.io",
+    "connect-src 'self' https://api.clerk.com https://*.clerk.accounts.dev https://clerk.lryanle.com https://vitals.vercel-insights.com https://*.ingest.sentry.io https://*.ingest.us.sentry.io",
     "frame-src 'self' https://*.clerk.accounts.dev",
     "worker-src 'self' blob:",
     "object-src 'none'",
