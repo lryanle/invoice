@@ -1,10 +1,11 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import React, { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Separator } from "@/components/ui/separator"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { Calendar } from "@/components/ui/calendar"
@@ -208,8 +209,12 @@ export function InvoiceForm({ invoiceId }: InvoiceFormProps) {
     return formData.lineItems.reduce((sum, item) => sum + item.total, 0)
   }
 
+  const calculateTaxAmount = () => {
+    return (calculateSubtotal() * formData.tax) / 100
+  }
+
   const calculateTotal = () => {
-    return calculateSubtotal() + formData.tax
+    return calculateSubtotal() + calculateTaxAmount()
   }
 
   const handleSave = async (status: "draft" | "complete" = "draft") => {
@@ -277,6 +282,94 @@ export function InvoiceForm({ invoiceId }: InvoiceFormProps) {
       })
     } finally {
       setSaving(false)
+    }
+  }
+
+  const handleDownloadDraft = async () => {
+    if (!formData.clientId) {
+      toast({
+        title: "Error",
+        description: "Please select a client for this invoice.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    if (!formData.invoiceNumber.trim()) {
+      toast({
+        title: "Error",
+        description: "Please enter an invoice number.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    if (formData.lineItems.length === 0 || formData.lineItems.every((item) => !item.name)) {
+      toast({
+        title: "Error",
+        description: "Please add at least one line item.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    setExporting(true)
+
+    try {
+      const isEdit = Boolean(invoiceId)
+      // First save/update the invoice as draft
+      const endpoint = isEdit ? `/api/invoices/${invoiceId}` : "/api/invoices"
+      const method = isEdit ? "PUT" : "POST"
+      const response = await fetch(endpoint, {
+        method,
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          ...formData,
+          status: "draft",
+          lineItems: formData.lineItems.filter((item) => item.name.trim() !== ""),
+        }),
+      })
+
+      if (response.ok) {
+        const invoice = await response.json()
+
+        // Then generate and download PDF
+        const pdfId = isEdit ? invoiceId : invoice._id
+        const pdfResponse = await fetch(`/api/invoices/${pdfId}/pdf`)
+        if (pdfResponse.ok) {
+          const blob = await pdfResponse.blob()
+          const url = window.URL.createObjectURL(blob)
+          const a = document.createElement("a")
+          a.href = url
+          
+          // Get filename from response headers
+          const contentDisposition = pdfResponse.headers.get('content-disposition')
+          const filename = contentDisposition?.match(/filename="(.+)"/)?.[1] || `invoice-${invoice.invoiceNumber}-draft.pdf`
+          a.download = filename
+          
+          document.body.appendChild(a)
+          a.click()
+          window.URL.revokeObjectURL(url)
+          document.body.removeChild(a)
+
+          toast({
+            title: "Success",
+            description: "Draft invoice saved and PDF downloaded successfully.",
+          })
+        } else {
+          throw new Error("Failed to generate PDF")
+        }
+      } else {
+        const errorData = await response.json()
+        throw new Error(errorData.message || "Failed to save invoice")
+      }
+    } catch (error) {
+      console.error("Error saving and exporting draft:", error)
+      handleError(error, "Failed to save and export draft invoice")
+    } finally {
+      setExporting(false)
     }
   }
 
@@ -612,12 +705,13 @@ export function InvoiceForm({ invoiceId }: InvoiceFormProps) {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="tax">Tax Amount ($)</Label>
+              <Label htmlFor="tax">Tax Rate (%)</Label>
               <Input
                 id="tax"
                 type="number"
                 step="0.01"
                 min="0"
+                max="100"
                 value={formData.tax}
                 onChange={(e) => updateFormData("tax", Number.parseFloat(e.target.value) || 0)}
                 placeholder="0.00"
@@ -637,61 +731,129 @@ export function InvoiceForm({ invoiceId }: InvoiceFormProps) {
           </CardContent>
         </Card>
 
+        {/* Invoice Totals */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Invoice Summary</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Items:</span>
+                <span>{formData.lineItems.filter((item) => item.name.trim() !== "").length}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Subtotal:</span>
+                <span>${calculateSubtotal().toFixed(2)}</span>
+              </div>
+              {formData.tax > 0 && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Tax ({formData.tax}%):</span>
+                  <span>${calculateTaxAmount().toFixed(2)}</span>
+                </div>
+              )}
+              <Separator />
+              <div className="flex justify-between font-semibold">
+                <span>Total:</span>
+                <span className="text-primary text-lg">${calculateTotal().toFixed(2)}</span>
+              </div>
+              {Math.ceil(formData.lineItems.filter((item) => item.name.trim() !== "").length / 12) > 1 && (
+                <>
+                  <Separator />
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Pages:</span>
+                    <span>{Math.ceil(formData.lineItems.filter((item) => item.name.trim() !== "").length / 12)}</span>
+                  </div>
+                </>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Actions */}
-        <div className="flex gap-4">
-          <Button
-            variant="outline"
-            onClick={() => handleSave("draft")}
-            disabled={saving || exporting}
-            className="flex-1"
-          >
-            {saving ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Saving...
-              </>
-            ) : (
-              <>
-                <Save className="mr-2 h-4 w-4" />
-                Save Draft
-              </>
-            )}
-          </Button>
-          <Button
-            onClick={() => handleSave("complete")}
-            disabled={saving || exporting}
-            className="flex-1"
-          >
-            {saving ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Saving...
-              </>
-            ) : (
-              <>
-                <Save className="mr-2 h-4 w-4" />
-                Save
-              </>
-            )}
-          </Button>
-          <Button onClick={handleSaveAndExport} disabled={saving || exporting} className="flex-1">
-            {exporting ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Exporting...
-              </>
-            ) : (
-              <>
-                <Download className="mr-2 h-4 w-4" />
-                Save & Export PDF
-              </>
-            )}
-          </Button>
+        <div className="space-y-3">
+          {/* Primary Actions */}
+          <div className="flex gap-4">
+            <Button
+              variant="outline"
+              onClick={() => handleSave("draft")}
+              disabled={saving || exporting}
+              className="flex-1"
+            >
+              {saving ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <Save className="mr-2 h-4 w-4" />
+                  Save as Draft
+                </>
+              )}
+            </Button>
+            <Button
+              onClick={() => handleSave("complete")}
+              disabled={saving || exporting}
+              className="flex-1"
+            >
+              {saving ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <Save className="mr-2 h-4 w-4" />
+                  Complete
+                </>
+              )}
+            </Button>
+          </div>
+          
+          {/* Download Actions */}
+          <div className="flex gap-4">
+            <Button
+              variant="outline"
+              onClick={handleDownloadDraft}
+              disabled={saving || exporting}
+              className="flex-1"
+            >
+              {exporting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Exporting...
+                </>
+              ) : (
+                <>
+                  <Download className="mr-2 h-4 w-4" />
+                  Download Draft
+                </>
+              )}
+            </Button>
+            <Button
+              onClick={handleSaveAndExport}
+              disabled={saving || exporting}
+              className="flex-1"
+            >
+              {exporting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Exporting...
+                </>
+              ) : (
+                <>
+                  <Download className="mr-2 h-4 w-4" />
+                  Complete and Download
+                </>
+              )}
+            </Button>
+          </div>
         </div>
       </div>
 
       {/* Live Invoice Preview */}
-      <div className="space-y-6  min-h-[500px] h-[80vh]">
+      <div className="min-h-[500px] h-[90vh] lg:sticky lg:self-start overflow-hidden lg:top-[88px] lg:max-h-[calc(100vh-104px)]">
         <LiveInvoicePreview
           clientId={formData.clientId}
           date={formData.date}
@@ -699,7 +861,8 @@ export function InvoiceForm({ invoiceId }: InvoiceFormProps) {
           customerRef={formData.customerRef}
           invoiceNumber={formData.invoiceNumber}
           lineItems={formData.lineItems}
-          tax={formData.tax}
+          tax={calculateTaxAmount()}
+          taxPercentage={formData.tax}
           notes={formData.notes}
           subtotal={calculateSubtotal()}
           total={calculateTotal()}

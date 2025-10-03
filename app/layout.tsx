@@ -62,6 +62,7 @@ export default function RootLayout({
           type="image/<generated>"
           sizes="<generated>"
         />
+        <SpeedInsights/>
         <body className={`font-sans ${GeistSans.variable} ${GeistMono.variable}`}>
           <GlobalErrorHandler>
             <ErrorBoundaryWrapper context="app-layout">

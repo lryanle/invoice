@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { Badge } from "@/components/ui/badge"
 import { Loader2 } from "lucide-react"
@@ -51,6 +51,7 @@ interface LiveInvoicePreviewProps {
   readonly invoiceNumber: string
   readonly lineItems: LineItem[]
   readonly tax: number
+  readonly taxPercentage: number
   readonly notes: string
   readonly subtotal: number
   readonly total: number
@@ -64,6 +65,7 @@ export function LiveInvoicePreview({
   invoiceNumber,
   lineItems,
   tax,
+  taxPercentage,
   notes,
   subtotal,
   total,
@@ -112,7 +114,9 @@ export function LiveInvoicePreview({
   }
 
   const validLineItems = lineItems.filter((item) => item.name.trim() !== "")
-  const itemsPerPage = 8
+  // Calculate items per page based on letter size (8.5" x 11")
+  // Account for header, footer, and spacing - approximately 12-15 items per page
+  const itemsPerPage = 12
   const totalPages = Math.ceil(validLineItems.length / itemsPerPage)
 
   if (loading) {
@@ -131,7 +135,7 @@ export function LiveInvoicePreview({
     const pageItems = validLineItems.slice(startIndex, endIndex)
 
     return (
-      <div key={pageNumber} className="bg-white text-black p-8 min-h-[800px] shadow-lg border rounded-lg relative">
+      <div key={pageNumber} className="bg-white text-black p-4 sm:p-6 lg:p-8 w-full max-w-[816px] h-[1056px] shadow-lg border rounded-lg relative mx-auto" style={{ aspectRatio: '8.5/11' }}>
         {/* Header with improved spacing */}
         <div className="flex justify-between items-start mb-10">
           <div className="space-y-3">
@@ -175,14 +179,14 @@ export function LiveInvoicePreview({
                   <div className="font-semibold text-base text-black">{userProfile.fullName}</div>
                   <div>{userProfile.email}</div>
                   {userProfile.phone && <div>{userProfile.phone}</div>}
-                  <div className="pt-2 space-y-1">
+                  {/* <div className="pt-2 space-y-1">
                     <div>{userProfile.address.street1}</div>
                     {userProfile.address.street2 && <div>{userProfile.address.street2}</div>}
                     <div>
                       {userProfile.address.city}, {userProfile.address.state} {userProfile.address.zip}
                     </div>
                     <div>{userProfile.address.country}</div>
-                  </div>
+                  </div> */}
                 </div>
               ) : (
                 <div className="text-sm text-gray-500 italic">Please complete your profile settings</div>
@@ -196,14 +200,14 @@ export function LiveInvoicePreview({
                 <div className="text-sm space-y-1 text-gray-700">
                   <div className="font-semibold text-base text-black">{client.name}</div>
                   <div>{client.email}</div>
-                  <div className="pt-2 space-y-1">
+                  {/* <div className="pt-2 space-y-1">
                     <div>{client.address.street1}</div>
                     {client.address.street2 && <div>{client.address.street2}</div>}
                     <div>
                       {client.address.city}, {client.address.state} {client.address.zip}
                     </div>
                     <div>{client.address.country}</div>
-                  </div>
+                  </div> */}
                 </div>
               ) : (
                 <div className="text-sm text-gray-500 italic">Please select a client</div>
@@ -264,7 +268,7 @@ export function LiveInvoicePreview({
                 </div>
                 {tax > 0 && (
                   <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">Tax:</span>
+                    <span className="text-gray-600">Tax ({taxPercentage}%):</span>
                     <span className="font-medium">{formatCurrency(tax)}</span>
                   </div>
                 )}
@@ -302,59 +306,14 @@ export function LiveInvoicePreview({
   }
 
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center justify-between">
-            <span>Live Invoice Preview</span>
-            {totalPages > 1 && <Badge variant="outline">{totalPages} pages</Badge>}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="p-0">
-          <div className="max-h-[800px] overflow-y-auto">
-            <div className="space-y-4 p-4">
-              {Array.from({ length: Math.max(1, totalPages) }, (_, i) => renderPage(i))}
-            </div>
+    <Card className="py-0 h-full">
+      <CardContent className="p-0 h-full">
+        <div className="h-full overflow-y-auto">
+          <div className="space-y-6 p-2 sm:p-4">
+            {Array.from({ length: Math.max(1, totalPages) }, (_, i) => renderPage(i))}
           </div>
-        </CardContent>
-      </Card>
-
-      {/* Quick Summary */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Invoice Summary</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <div className="flex justify-between text-sm">
-            <span className="text-muted-foreground">Items:</span>
-            <span>{validLineItems.length}</span>
-          </div>
-          <div className="flex justify-between text-sm">
-            <span className="text-muted-foreground">Subtotal:</span>
-            <span>{formatCurrency(subtotal)}</span>
-          </div>
-          {tax > 0 && (
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Tax:</span>
-              <span>{formatCurrency(tax)}</span>
-            </div>
-          )}
-          <Separator />
-          <div className="flex justify-between font-semibold">
-            <span>Total:</span>
-            <span className="text-primary text-lg">{formatCurrency(total)}</span>
-          </div>
-          {totalPages > 1 && (
-            <>
-              <Separator />
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Pages:</span>
-                <span>{totalPages}</span>
-              </div>
-            </>
-          )}
-        </CardContent>
-      </Card>
-    </div>
+        </div>
+      </CardContent>
+    </Card>
   )
 }
