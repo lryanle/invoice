@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { Plus, Package, X } from "lucide-react"
+import { Plus, X } from "lucide-react"
 import { CreatableCombobox } from "@/components/ui/combobox-createable"
 import { useErrorHandler, fetchWithErrorHandling, parseApiError } from "@/lib/client-error-handler"
 
@@ -136,11 +136,6 @@ export function LineItemsSection({ lineItems, onLineItemsChange }: LineItemsSect
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-2">
-        <Package className="h-4 w-4 text-primary" />
-        <Label className="text-sm font-medium">Items & Services</Label>
-      </div>
-
       {lineItems.map((item, index) => (
         <div key={`Item ${index + 1}`} className="border-2 rounded-lg bg-card transition-all hover:drop-shadow">
           <div className="flex justify-between items-center w-full bg-border rounded-t-md py-3 px-6">

@@ -15,7 +15,7 @@ import { LiveInvoicePreview } from "@/components/invoices/live-invoice-preview"
 import { useToast } from "@/hooks/use-toast"
 import { useErrorHandler, fetchWithErrorHandling, parseApiError } from "@/lib/client-error-handler"
 import { useRouter } from "next/navigation"
-import { CalendarIcon, Building, FileText, Save, Download, Loader2, Plus } from "lucide-react"
+import { CalendarIcon, Building, FileText, Save, Download, Loader2, Plus, Package } from "lucide-react"
 import { CreateClientDialog } from "@/components/clients/create-client-dialog"
 
 function formatDate(date: Date | undefined) {
@@ -691,7 +691,10 @@ export function InvoiceForm({ invoiceId }: InvoiceFormProps) {
         {/* Line Items */}
         <Card>
           <CardHeader>
-            <CardTitle>Line Items</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              <Package className="h-5 w-5 text-primary" />
+              Items & Services
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <LineItemsSection lineItems={formData.lineItems} onLineItemsChange={updateLineItems} />
